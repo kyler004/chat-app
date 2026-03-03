@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'; 
 import { PrismaClient } from '@prisma/client'; 
 
-const prisma = newPrismaClient(); 
+const prisma = new PrismaClient(); 
 
 // Helper - we'll reuse this in multiple places
 const generateToken = (userId) => {
@@ -43,6 +43,62 @@ export const register  = async (req, res) => {
         // Return token (user is logged in immediately after registering) 
         const token = generateToken(user.id); 
         
-        
+        res.status(201).json({
+            token, 
+            user : {
+                id: user.id, 
+                username: user.username, 
+                email: user.email, 
+            }, 
+        }); 
+    } catch (error) {
+        console.error('Register error:', error); 
+        res.status(500).json({ error: 'Internal server error' }); 
     }
-}
+}; 
+
+//POST /api/auth/login
+
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body; 
+
+        //Find the user
+        const user = await prisma.user.findUnique({ where: {email}}); 
+
+        if (!user) {
+            // Important: Returns the same error for when the email or password is wrong so as not to indicate attackers which one is wrong
+            return res.status(401).json({ error: 'Invalid credentials' }); 
+        }
+
+        //Comparing password with hash
+        const isMatch = await bcrypt.compare(password, user.password); 
+
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' }); 
+        }
+
+        //Return the token
+        const token = generateToken(user.id); 
+
+        res.json({
+            token, 
+            user: {
+                id: user.id, 
+                username: user.username, 
+                email: user.email, 
+            }, 
+        }); 
+    } catch (error) {
+        console.error('Login error:', error); 
+        res.status(500).json({ error: 'Internal server error'}); 
+    }
+}; 
+
+//Protected route
+// GET /api/auth/me
+
+export const getMe = async (req, res) => {
+    // req.user is attached by the protect middleware
+    res.json({ user: req.user }); 
+}; 
