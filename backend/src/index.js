@@ -5,6 +5,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import messagesRoutes from "./routes/messages.routes";
+import { socketAuthMiddleware } from "./sockets/socket.middleware";
+import { registerSocketHandlers } from "./sockets/socket.handlers";
 
 dotenv.config();
 
@@ -31,8 +33,9 @@ app.use("/api/messages", messagesRoutes);
 
 //app.use("api/rooms", roomRoutes);
 
-//websocket handler (to be added soon too)
-//registerSocketHandlers(io);
+//websocket - Auth runs before any event handler
+io.use(socketAuthMiddleware);
+registerSocketHandlers(io);
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
