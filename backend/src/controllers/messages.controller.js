@@ -1,11 +1,16 @@
-import { PrismaClient } from "@prisma/client";
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import {
   getCachedMessages,
   setCachedMessages,
   CACHE_KEYS,
-} from "../services/redis.service";
+} from "../services/redis.service.js";
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 export const getRoomMessages = async (req, res) => {
   try {

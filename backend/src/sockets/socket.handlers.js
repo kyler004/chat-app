@@ -1,7 +1,12 @@
-import { PrismaClient } from "@prisma/client";
-import { invalidateCache, CACHE_KEYS } from "../services/redis.service";
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
+import { invalidateCache, CACHE_KEYS } from "../services/redis.service.js";
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 export const registerSocketHandlers = (io) => {
   io.on("connection", (socket) => {
@@ -96,7 +101,7 @@ export const registerSocketHandlers = (io) => {
         const participant = await prisma.dMParticipant.findUnique({
           where: {
             userId_conversationId: {
-              user_Id: socket.user.id,
+              userId: socket.user.id,
               conversationId,
             },
           },
@@ -123,7 +128,7 @@ export const registerSocketHandlers = (io) => {
         const message = await prisma.message.create({
           data: {
             content: content.trim(),
-            senderId: socket.user_id,
+            senderId: socket.user.id,
             conversationId,
           },
           include: {
