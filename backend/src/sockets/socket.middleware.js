@@ -1,14 +1,19 @@
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 //This runs once when a client first connects via websockets
 export const socketAuthMiddleware = async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
 
-    if (token) {
+    if (!token) {
       return next(new Error("Authentication required"));
     }
 

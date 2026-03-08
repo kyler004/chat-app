@@ -1,14 +1,14 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import dotenv from "dotenv";
-import authRoutes from "./routes/auth.routes";
-import messagesRoutes from "./routes/messages.routes";
-import { socketAuthMiddleware } from "./sockets/socket.middleware";
-import { registerSocketHandlers } from "./sockets/socket.handlers";
-
-dotenv.config();
+import authRoutes from "./routes/auth.routes.js";
+import messagesRoutes from "./routes/messages.routes.js";
+import { socketAuthMiddleware } from "./sockets/socket.middleware.js";
+import { registerSocketHandlers } from "./sockets/socket.handlers.js";
 
 const app = express();
 const httpServer = createServer(app); //Socket.io needs the raw HTTP server
