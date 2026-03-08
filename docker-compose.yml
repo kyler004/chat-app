@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: chat_postgres
+    environment:
+      POSTGRES_USER: chatuser
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: chatdb
+    ports:
+      - "5432:5432"       # host:container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # ↑ data persists even if the container restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatuser -d chatdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis Cache ──────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: chat_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Backend API ──────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: chat_backend
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgresql://chatuser:chatpass@postgres:5432/chatdb
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-secret-change-this
+      CLIENT_URL: http://localhost:3000
+      PORT: 4000
+    depends_on:
+      postgres:
+        condition: service_healthy   # ← waits for postgres to be ready
+      redis:
+        condition: service_healthy   # ← waits for redis to be ready
+    volumes:
+      - ./backend:/app               # live reload in dev
+      - /app/node_modules            # keep container's node_modules
+
+  # ── Frontend ─────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: chat_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:4000
+      VITE_SOCKET_URL: http://localhost:4000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+  redis_data:
