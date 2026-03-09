@@ -5,6 +5,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+// import morgan from "morgan"; 
 import authRoutes from "./routes/auth.routes.js";
 import messagesRoutes from "./routes/messages.routes.js";
 import { socketAuthMiddleware } from "./sockets/socket.middleware.js";
@@ -22,6 +23,7 @@ const io = new Server(httpServer, {
 
 //Middleware
 app.use(cors());
+// app.use(morgan()); 
 app.use(express.json());
 
 //Health check - base Route
