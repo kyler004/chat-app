@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutPanelLeft, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function AuthPage() {
   const { login, register } = useAuth();
@@ -26,127 +28,142 @@ export default function AuthPage() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.glow} />
-      <div style={styles.card}>
-        {/* Logo */}
-        <div style={styles.logo}>
-          <span style={styles.logoIcon}>◈</span>
-          <span style={styles.logoText}>Relay</span>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg-base px-4 font-sans">
+      {/* Dynamic Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="h-[600px] w-[600px] rounded-full bg-brand/10 blur-[120px]" />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="glass-card relative z-10 w-full max-w-[420px] overflow-hidden rounded-2xl p-8 md:p-10"
+      >
+        {/* Header Section */}
+        <div className="mb-8 text-center">
+          <motion.div 
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            className="mb-4 inline-flex items-center justify-center rounded-xl bg-brand/10 p-3 text-brand"
+          >
+            <LayoutPanelLeft size={32} />
+          </motion.div>
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary">
+            {mode === 'login' ? 'Welcome back' : 'Create account'}
+          </h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            {mode === 'login' ? 'Login to continue your conversations' : 'Join Relay and start chatting today'}
+          </p>
         </div>
-        <p style={styles.tagline}>
-          {mode === 'login' ? 'Welcome back.' : 'Create your account.'}
-        </p>
 
-        {error && <div style={styles.error}>{error}</div>}
-
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {mode === 'register' && (
-            <Field
-              label="Username"
-              type="text"
-              value={form.username}
-              onChange={(v) => setForm({ ...form, username: v })}
-              placeholder="yourname"
-            />
+        {/* Error Message */}
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 overflow-hidden"
+            >
+              <div className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
+                {error}
+              </div>
+            </motion.div>
           )}
-          <Field
-            label="Email"
-            type="email"
-            value={form.email}
-            onChange={(v) => setForm({ ...form, email: v })}
-            placeholder="you@example.com"
-          />
-          <Field
-            label="Password"
-            type="password"
-            value={form.password}
-            onChange={(v) => setForm({ ...form, password: v })}
-            placeholder="••••••••"
-          />
+        </AnimatePresence>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <AnimatePresence mode="popLayout">
+            {mode === 'register' && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                key="username-field"
+                className="space-y-2"
+              >
+                <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Username</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+                    <User size={18} />
+                  </span>
+                  <input
+                    type="text"
+                    value={form.username}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
+                    placeholder="kyler004"
+                    className="input-field w-full pl-10"
+                    required
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Email Address</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+                <Mail size={18} />
+              </span>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="you@example.com"
+                className="input-field w-full pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Password</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+                <Lock size={18} />
+              </span>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="••••••••"
+                className="input-field w-full pl-10"
+                required
+              />
+            </div>
+          </div>
 
           <button
             type="submit"
-            style={{ ...styles.btn, opacity: loading ? 0.6 : 1 }}
             disabled={loading}
+            className="btn-primary group relative w-full overflow-hidden"
           >
-            {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
+            <span className={`inline-flex items-center gap-2 transition-transform duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
+              {mode === 'login' ? 'Sign In' : 'Sign Up'}
+              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+            </span>
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 size={24} className="animate-spin" />
+              </div>
+            )}
           </button>
         </form>
 
-        <p style={styles.toggle}>
-          {mode === 'login' ? "Don't have an account? " : 'Already have one? '}
-          <span
-            style={styles.link}
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          >
-            {mode === 'login' ? 'Register' : 'Sign in'}
-          </span>
-        </p>
-      </div>
+        <div className="mt-8 text-center text-sm">
+          <p className="text-text-secondary">
+            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+              className="font-semibold text-brand transition-colors hover:text-brand-hover hover:underline underline-offset-4"
+            >
+              {mode === 'login' ? 'Create one' : 'Sign in'}
+            </button>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }
-
-// Reusable field sub-component
-function Field({ label, type, value, onChange, placeholder }) {
-  return (
-    <div style={styles.field}>
-      <label style={styles.label}>{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={styles.input}
-        required
-      />
-    </div>
-  );
-}
-
-const styles = {
-  page: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    height: '100vh', background: 'var(--bg-base)', position: 'relative',
-    overflow: 'hidden',
-  },
-  glow: {
-    position: 'absolute', width: 600, height: 600, borderRadius: '50%',
-    background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)',
-    top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-    pointerEvents: 'none',
-  },
-  card: {
-    background: 'var(--bg-surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)', padding: '40px 44px', width: 400,
-    position: 'relative', boxShadow: 'var(--shadow-lg)',
-  },
-  logo: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 },
-  logoIcon: { fontSize: 28, color: 'var(--accent)' },
-  logoText: { fontSize: 24, fontWeight: 600, letterSpacing: '-0.5px' },
-  tagline: { color: 'var(--text-secondary)', marginBottom: 28, fontSize: 14 },
-  error: {
-    background: 'rgba(248,114,114,0.1)', border: '1px solid var(--danger)',
-    color: 'var(--danger)', padding: '10px 14px', borderRadius: 'var(--radius-sm)',
-    fontSize: 13, marginBottom: 16,
-  },
-  form: { display: 'flex', flexDirection: 'column', gap: 16 },
-  field: { display: 'flex', flexDirection: 'column', gap: 6 },
-  label: { fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.5px', textTransform: 'uppercase' },
-  input: {
-    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-sm)', padding: '10px 14px',
-    color: 'var(--text-primary)', fontSize: 14, outline: 'none',
-    fontFamily: 'var(--font-sans)',
-    transition: 'border-color 0.2s',
-  },
-  btn: {
-    marginTop: 8, background: 'var(--accent)', color: '#fff',
-    border: 'none', borderRadius: 'var(--radius-sm)', padding: '12px',
-    fontSize: 14, fontWeight: 600, cursor: 'pointer', letterSpacing: '0.3px',
-    transition: 'background 0.2s',
-  },
-  toggle: { marginTop: 20, textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' },
-  link: { color: 'var(--accent)', cursor: 'pointer', fontWeight: 500 },
-};

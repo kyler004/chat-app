@@ -1,54 +1,75 @@
 @import "tailwindcss";
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+
+@theme {
+  --color-brand: #5b6af0;
+  --color-brand-hover: #6e7cf5;
+  --color-bg-base: #0f1117;
+  --color-bg-surface: #181c27;
+  --color-bg-elevated: #1f2335;
+  --color-bg-hover: #252a3a;
+  --color-border-subtle: #2a2f42;
+  --color-text-primary: #e8eaf0;
+  --color-text-secondary: #8b90a7;
+  --color-text-muted: #4a5068;
 }
 
-:root {
-  --bg-base: #0f1117;
-  --bg-surface: #181c27;
-  --bg-elevated: #1f2335;
-  --bg-hover: #252a3a;
-  --border: #2a2f42;
-  --accent: #5b6af0;
-  --accent-glow: rgba(91, 106, 240, 0.25);
-  --accent-hover: #6e7cf5;
-  --text-primary: #e8eaf0;
-  --text-secondary: #8b90a7;
-  --text-muted: #4a5068;
-  --success: #3ecf8e;
-  --danger: #f87272;
-  --font-sans: "DM Sans", sans-serif;
-  --font-mono: "DM Mono", monospace;
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.4);
+@layer base {
+  :root {
+    --bg-base: #0f1117;
+    --bg-surface: #181c27;
+    --bg-elevated: #1f2335;
+    --bg-hover: #252a3a;
+    --border: #2a2f42;
+    --accent: #5b6af0;
+    --accent-glow: rgba(91, 106, 240, 0.25);
+    --text-primary: #e8eaf0;
+    --text-secondary: #8b90a7;
+    --text-muted: #4a5068;
+    --success: #3ecf8e;
+    --danger: #f87272;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+  }
+
+  * {
+    @apply border-border-subtle;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-bg-base text-text-primary antialiased;
+    font-family: "DM Sans", sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100vh;
+    display: flex;
+  }
 }
 
-body {
-  font-family: var(--font-sans);
-  background: var(--bg-base);
-  color: var(--text-primary);
-  height: 100vh;
-  overflow: hidden;
-}
-
-#root {
-  height: 100vh;
-  display: flex;
+@layer components {
+  .glass-card {
+    @apply bg-bg-surface/80 backdrop-blur-xl border border-white/5 shadow-2xl;
+  }
+  
+  .input-field {
+    @apply bg-bg-elevated border border-border-subtle rounded-md px-4 py-2 text-sm outline-none focus:border-brand transition-colors duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-brand hover:bg-brand-hover text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 }
 
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 2px;
+  @apply bg-border-subtle rounded-full;
 }
