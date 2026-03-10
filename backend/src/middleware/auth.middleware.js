@@ -1,12 +1,5 @@
 import jwt from 'jsonwebtoken'; 
-import pkg from '@prisma/client'; 
-const { PrismaClient } = pkg; 
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
-
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+import { prisma } from '../lib/prisma.js'; 
  
 
 export const protect = async (req, res, next) => {
@@ -14,7 +7,7 @@ export const protect = async (req, res, next) => {
         // Extract the token from the authorization header
         const authHeader = req.headers.authorization; 
 
-        if(!authHeader || authHeader.startsWith('Bearer ')) {
+        if(!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ error: 'No token provided'}); 
         }
 
