@@ -3,13 +3,12 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config();
 
 import authRoutes from './routes/auth.routes.js';
 import messageRoutes from './routes/messages.routes.js';
 import { socketAuthMiddleware } from './sockets/socket.middleware.js';
 import { registerSocketHandlers } from './sockets/socket.handlers.js';
-
-dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);

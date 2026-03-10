@@ -1,12 +1,5 @@
-import pkg from "@prisma/client";
-const { PrismaClient } = pkg;
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { prisma } from "../lib/prisma.js";
 import { invalidateCache, CACHE_KEYS } from "../services/redis.service.js";
-
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 
 export const registerSocketHandlers = (io) => {
   io.on("connection", (socket) => {
