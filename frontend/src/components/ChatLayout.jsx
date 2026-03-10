@@ -41,7 +41,7 @@ export default function ChatLayout() {
     if (!activeRoom) return;
     socket.joinRoom(activeRoom.id);
     api.get(`/api/messages/room/${activeRoom.id}`)
-      .then(({ data }) => setMessages(data.messages));
+      .then(({ data }) => setMessages(data.messages || []));
   }, [activeRoom, socket]);
 
   // Listen for new messages
@@ -51,6 +51,15 @@ export default function ChatLayout() {
     });
     return cleanup;
   }, [socket.onMessage]);
+
+  // Listen for socket errors
+  useEffect(() => {
+    socket.socket?.on('error', (err) => {
+      console.error('Socket error received:', err);
+      alert(`Message error: ${err.message}`);
+    });
+    return () => socket.socket?.off('error');
+  }, [socket.socket]);
 
   // Listen for typing indicators
   useEffect(() => {
@@ -223,7 +232,7 @@ export default function ChatLayout() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-              {messages.map((msg, i) => {
+              {(messages || []).map((msg, i) => {
                 const isOwn = msg.sender?.id === user?.id;
                 const showHeader = i === 0 || messages[i - 1]?.sender?.id !== msg.sender?.id || 
                                   (new Date(msg.createdAt) - new Date(messages[i-1].createdAt) > 300000);

@@ -10,33 +10,32 @@ export const registerSocketHandlers = (io) => {
     //Client joins a chat room
     socket.on("room:join", async ({ roomId }) => {
       try {
-        //verify user is a member of this room
-        const membership = await prisma.roomMember.findUnique({
+        // Automatically join the user to the room if they aren't a member (public forums)
+        await prisma.roomMember.upsert({
           where: {
             userId_roomId: {
               userId: socket.user.id,
               roomId,
             },
           },
+          update: {},
+          create: {
+            userId: socket.user.id,
+            roomId,
+          },
         });
 
-        if (!membership) {
-          socket.emit("error", {
-            message: "You are not a member of this room",
-          });
-          return;
-        }
-
-        //Join the Socket.io room (a named channel)
+        // Join the Socket.io room (a named channel)
         socket.join(roomId);
-        console.log(`${socket.user.username} joined room ${roomId}`);
+        console.log(`📡 ${socket.user.username} joined room ${roomId}`);
 
-        //Tell everyone else in the room this user arrived
+        // Tell everyone else in the room this user arrived
         socket.to(roomId).emit("room:user_joined", {
           user: socket.user,
           roomId,
         });
       } catch (error) {
+        console.error("Join room error:", error);
         socket.emit("error", { message: "Failed to join room" });
       }
     });
@@ -53,7 +52,17 @@ export const registerSocketHandlers = (io) => {
     //Client sends a message to a room
     socket.on("message:send_room", async ({ roomId, content }) => {
       try {
-        if (!content?.trim()) return; // ignore all empty messages
+        if (!content?.trim()) return; 
+
+        // Double check membership before allowing send
+        const membership = await prisma.roomMember.findUnique({
+          where: { userId_roomId: { userId: socket.user.id, roomId } }
+        });
+
+        if (!membership) {
+          socket.emit("error", { message: "You must join this room to send messages" });
+          return;
+        }
 
         //Persist to database
         const message = await prisma.message.create({
@@ -69,18 +78,16 @@ export const registerSocketHandlers = (io) => {
           },
         });
 
-        // Invalidate the cache - It's stale now
+        // Invalidate the cache
         await invalidateCache(CACHE_KEYS.roomMessages(roomId));
 
-        //Broadcast to EVERYONE in the room (including sender)
-        // io.to() vs socket.to():
-        // - socket.to(room) = everyone EXCEPT the sender
-        // - io.to(room) = everyone INCLUDING the sender
+        //Broadcast to EVERYONE in the room
         io.to(roomId).emit("message:new", {
           message,
           roomId,
         });
       } catch (error) {
+        console.error("Send message error:", error);
         socket.emit("error", { message: "Failed to send message" });
       }
     });
@@ -105,15 +112,14 @@ export const registerSocketHandlers = (io) => {
           return;
         }
 
-        socket.join(`dm:${conversationId}`); // prefix to avoid Id collisions
-        console.log(`${socket.user} joined DM ${conversationId}`);
+        socket.join(`dm:${conversationId}`);
+        console.log(`📡 ${socket.user.username} joined DM ${conversationId}`);
       } catch (error) {
         socket.emit("error", { message: "Failed to join DM" });
       }
     });
 
     // Client sends a DM
-
     socket.on("message:send_dm", async ({ conversationId, content }) => {
       try {
         if (!content?.trim()) return;
@@ -133,7 +139,6 @@ export const registerSocketHandlers = (io) => {
 
         await invalidateCache(CACHE_KEYS.dmMessages(conversationId));
 
-        // Both participants are in this socket room
         io.to(`dm:${conversationId}`).emit("message:new", {
           message,
           conversationId,
@@ -144,9 +149,15 @@ export const registerSocketHandlers = (io) => {
     });
 
     //TYPING INDICATORS
-    // Lightweight - no DB, just real-time presence
 
     socket.on("typing:start", ({ roomId }) => {
+      socket.to(roomId).emit("typing:update", {
+        user: socket.user,
+        isTyping: true,
+      });
+    });
+
+    socket.on("typing:stop", ({ roomId }) => {
       socket.to(roomId).emit("typing:update", {
         user: socket.user,
         isTyping: false,
@@ -157,7 +168,6 @@ export const registerSocketHandlers = (io) => {
 
     socket.on("disconnect", (reason) => {
       console.log(`🔴 User disconnected: ${socket.user.username} — ${reason}`);
-      // socket.io automatically removes the socket from all rooms on disconnect
     });
   });
 };

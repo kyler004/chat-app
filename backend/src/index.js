@@ -8,6 +8,7 @@ dotenv.config();
 
 import authRoutes from "./routes/auth.routes.js";
 import messageRoutes from "./routes/messages.routes.js";
+import roomRoutes from "./routes/room.routes.js";
 import { socketAuthMiddleware } from "./sockets/socket.middleware.js";
 import { registerSocketHandlers } from "./sockets/socket.handlers.js";
 
@@ -16,13 +17,16 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     methods: ["GET", "POST"],
   },
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true
+}));
 app.use(morgan());
 app.use(express.json());
 
@@ -30,6 +34,7 @@ app.use(express.json());
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/rooms", roomRoutes);
 
 // WebSocket — auth runs before any event handler
 io.use(socketAuthMiddleware);
