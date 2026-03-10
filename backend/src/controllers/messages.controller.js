@@ -14,7 +14,7 @@ export const getRoomMessages = async (req, res) => {
     const cached = await getCachedMessages(cacheKey);
     if (cached) {
       console.log(`Cache HIT for room ${roomId}`);
-      return res.json({ message: cached, fromCache: true });
+      return res.json({ messages: cached, fromCache: true });
     }
 
     // Cache miss, get from database

@@ -12,7 +12,7 @@ export const useSocket = (user) => {
     // Create socket connection once, reuse it everywhere
     if (!socketInstance) {
       socketInstance = io(
-        import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000',
+        import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000',
         {
           auth: { token: localStorage.getItem('token') },
           // ↑ this is how we send the JWT during the WS handshake
@@ -83,7 +83,7 @@ export const useSocket = (user) => {
   }, []);
 
   return {
-    socket: socketRef.current,
+    socket: socketInstance,
     joinRoom, joinDM,
     sendRoomMessage, sendDM,
     startTyping, stopTyping,
