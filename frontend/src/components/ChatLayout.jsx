@@ -19,7 +19,8 @@ import {
   Sparkles,
   MoreVertical,
   Paperclip,
-  Smile
+  Smile,
+  X
 } from 'lucide-react';
 
 export default function ChatLayout() {
@@ -31,6 +32,8 @@ export default function ChatLayout() {
   const [typingUsers, setTypingUsers] = useState([]);
   const [input, setInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const typingTimer = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -57,11 +60,12 @@ export default function ChatLayout() {
 
   // Listen for socket errors
   useEffect(() => {
-    socket.socket?.on('error', (err) => {
+    const s = socket.socket;
+    s?.on('error', (err) => {
       console.error('Socket error received:', err);
     });
-    return () => socket.socket?.off('error');
-  }, [socket.socket]);
+    return () => s?.off('error');
+  }, [socket]);
 
   // Listen for typing indicators
   useEffect(() => {
@@ -77,8 +81,10 @@ export default function ChatLayout() {
 
   // Auto-scroll to latest message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (!isSearching) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isSearching]);
 
   const handleSend = () => {
     if (!input.trim() || !activeRoom) return;
@@ -102,6 +108,10 @@ export default function ChatLayout() {
     logout();
   };
 
+  const filteredMessages = searchQuery.trim() 
+    ? messages.filter(msg => msg.content.toLowerCase().includes(searchQuery.toLowerCase()))
+    : messages;
+
   return (
     <div className="flex h-screen w-full bg-bg-base overflow-hidden font-sans decoration-none">
       {/* Mesh Background for Main Content */}
@@ -122,7 +132,7 @@ export default function ChatLayout() {
           >
             {/* Sidebar Glow */}
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-               <div className="absolute -top-[20%] -left-[20%] w-[100%] h-[100%] bg-brand/5 blur-[100px] rounded-full" />
+               <div className="absolute -top-[20%] -left-[20%] w-full h-full bg-brand/5 blur-[100px] rounded-full" />
             </div>
 
             {/* Header */}
@@ -169,7 +179,11 @@ export default function ChatLayout() {
                   {rooms.map((room) => (
                     <button
                       key={room.id}
-                      onClick={() => setActiveRoom(room)}
+                      onClick={() => {
+                        setActiveRoom(room);
+                        setSearchQuery('');
+                        setIsSearching(false);
+                      }}
                       className={`flex w-full items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all group relative overflow-hidden ${
                         activeRoom?.id === room.id 
                           ? "text-white" 
@@ -243,7 +257,41 @@ export default function ChatLayout() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"><Search size={22} /></button>
+                <AnimatePresence mode="wait">
+                  {isSearching ? (
+                    <motion.div 
+                      key="search-input"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 280, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      className="relative flex items-center"
+                    >
+                      <input 
+                        autoFocus
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search messages..."
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-2 pl-4 pr-10 text-sm focus:ring-4 focus:ring-brand/10 outline-none transition-all"
+                      />
+                      <button 
+                        onClick={() => { setIsSearching(false); setSearchQuery(''); }}
+                        className="absolute right-3 p-1 text-text-muted hover:text-brand transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.button 
+                      key="search-btn"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      onClick={() => setIsSearching(true)}
+                      className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"
+                    >
+                      <Search size={22} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
                 <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"><Settings size={22} /></button>
                 <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"><MoreVertical size={22} /></button>
               </div>
@@ -251,23 +299,37 @@ export default function ChatLayout() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-10 py-10 space-y-10 custom-scrollbar">
-              {(messages || []).map((msg, i) => {
-                const isOwn = msg.sender?.id === user?.id;
-                const showHeader = i === 0 || messages[i - 1]?.sender?.id !== msg.sender?.id || 
-                                  (new Date(msg.createdAt) - new Date(messages[i-1].createdAt) > 300000);
-                
-                return (
-                  <MessageItem 
-                    key={msg.id} 
-                    message={msg} 
-                    isOwn={isOwn} 
-                    showHeader={showHeader} 
-                  />
-                );
-              })}
+              {filteredMessages.length > 0 ? (
+                filteredMessages.map((msg, i) => {
+                  const isOwn = msg.sender?.id === user?.id;
+                  const showHeader = i === 0 || filteredMessages[i - 1]?.sender?.id !== msg.sender?.id || 
+                                    (new Date(msg.createdAt) - new Date(filteredMessages[i-1].createdAt) > 300000);
+                  
+                  return (
+                    <MessageItem 
+                      key={msg.id} 
+                      message={msg} 
+                      isOwn={isOwn} 
+                      showHeader={showHeader} 
+                      searchQuery={searchQuery}
+                    />
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
+                  <Search size={48} className="text-text-muted" />
+                  <p className="text-lg font-bold">No messages found</p>
+                  <button 
+                    onClick={() => { setIsSearching(false); setSearchQuery(''); }}
+                    className="text-brand hover:underline font-bold"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )}
               
               <AnimatePresence>
-                {typingUsers.length > 0 && (
+                {!searchQuery && typingUsers.length > 0 && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -290,7 +352,7 @@ export default function ChatLayout() {
 
             {/* Input */}
             <footer className="p-8 pt-0">
-              <div className="relative glass-card rounded-[2rem] p-3 border-white/10 ring-1 ring-white/5 shadow-2xl focus-within:ring-brand/30 transition-all bg-bg-surface/30 backdrop-blur-3xl">
+              <div className="relative glass-card rounded-4xl p-3 border-white/10 ring-1 ring-white/5 shadow-2xl focus-within:ring-brand/30 transition-all bg-bg-surface/30 backdrop-blur-3xl">
                 <div className="flex items-end gap-3 px-3">
                   <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all mb-1"><Paperclip size={22} /></button>
                   <div className="flex-1 py-4">
@@ -338,7 +400,7 @@ export default function ChatLayout() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="btn-primary mt-12 rounded-[1.5rem]! px-10 py-4 text-base"
+              className="btn-primary mt-12 rounded-3xl! px-10 py-4 text-base"
             >
               Launch a Conversation
             </motion.button>
@@ -359,10 +421,20 @@ function SidebarItem({ icon, label, badge }) {
   );
 }
 
-function MessageItem({ message, isOwn, showHeader }) {
+function MessageItem({ message, isOwn, showHeader, searchQuery }) {
   const time = new Date(message.createdAt).toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit',
   });
+
+  const highlightContent = (content, query) => {
+    if (!query.trim()) return content;
+    const parts = content.split(new RegExp(`(${query})`, 'gi'));
+    return parts.map((part, i) => 
+      part.toLowerCase() === query.toLowerCase() 
+        ? <span key={i} className="bg-brand/30 text-white rounded px-0.5">{part}</span> 
+        : part
+    );
+  };
 
   return (
     <motion.div 
@@ -392,15 +464,15 @@ function MessageItem({ message, isOwn, showHeader }) {
             <span className="text-[10px] text-text-muted font-black tracking-widest opacity-40">{time}</span>
           </div>
         )}
-        <div className={`relative px-5 py-3.5 rounded-[1.5rem] text-[15px] font-medium leading-relaxed whitespace-pre-wrap shadow-sm transition-all hover:shadow-md ${
+        <div className={`relative px-5 py-3.5 rounded-3xl text-[15px] font-medium leading-relaxed whitespace-pre-wrap shadow-sm transition-all hover:shadow-md ${
           isOwn 
             ? "bg-brand text-white rounded-tr-none shadow-brand/10 hover:shadow-brand/20" 
             : "bg-bg-elevated border border-white/5 text-text-primary rounded-tl-none"
         }`}>
           {isOwn && (
-             <div className="absolute top-0 right-0 w-full h-full bg-linear-to-br from-white/10 to-transparent rounded-[1.5rem] rounded-tr-none pointer-events-none" />
+             <div className="absolute top-0 right-0 w-full h-full bg-linear-to-br from-white/10 to-transparent rounded-3xl rounded-tr-none pointer-events-none" />
           )}
-          <span className="relative z-10">{message.content}</span>
+          <span className="relative z-10">{highlightContent(message.content, searchQuery)}</span>
         </div>
       </div>
     </motion.div>
