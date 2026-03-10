@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useSocket } from '../hooks/useSocket';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import SettingsModal from './SettingsModal';
 import { 
   Hash, 
   SendHorizontal, 
@@ -24,7 +25,7 @@ import {
 } from 'lucide-react';
 
 export default function ChatLayout() {
-  const { user, logout } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const socket = useSocket(user);
   const [rooms, setRooms] = useState([]);
   const [activeRoom, setActiveRoom] = useState(null);
@@ -34,6 +35,7 @@ export default function ChatLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const typingTimer = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -56,7 +58,7 @@ export default function ChatLayout() {
       setMessages((prev) => [...prev, message]);
     });
     return cleanup;
-  }, [socket.onMessage]);
+  }, [socket]);
 
   // Listen for socket errors
   useEffect(() => {
@@ -205,10 +207,13 @@ export default function ChatLayout() {
 
             {/* User Footer */}
             <div className="p-5 border-t border-white/5 bg-bg-surface/20">
-              <div className="flex items-center gap-4 rounded-3xl bg-white/5 p-4 border border-white/5 hover:bg-white/10 transition-all group">
+              <div 
+                onClick={() => setIsSettingsOpen(true)}
+                className="flex items-center gap-4 rounded-3xl bg-white/5 p-4 border border-white/5 hover:bg-white/10 transition-all group cursor-pointer"
+              >
                 <div className="relative">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white font-black text-lg shadow-xl shadow-brand/20">
-                    {user?.username?.[0]?.toUpperCase()}
+                    {user?.avatar ? <img src={user.avatar} alt="" className="w-full h-full object-cover rounded-2xl" /> : user?.username?.[0]?.toUpperCase()}
                   </div>
                   <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-4 border-bg-surface bg-success shadow-sm animate-pulse" />
                 </div>
@@ -217,7 +222,7 @@ export default function ChatLayout() {
                   <p className="text-[10px] text-success font-black uppercase tracking-widest mt-0.5">Online Now</p>
                 </div>
                 <button 
-                  onClick={handleLogout}
+                  onClick={(e) => { e.stopPropagation(); handleLogout(); }}
                   className="p-2.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-all"
                   title="Logout"
                 >
@@ -292,7 +297,12 @@ export default function ChatLayout() {
                     </motion.button>
                   )}
                 </AnimatePresence>
-                <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"><Settings size={22} /></button>
+                <button 
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"
+                >
+                  <Settings size={22} />
+                </button>
                 <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"><MoreVertical size={22} /></button>
               </div>
             </header>
@@ -407,6 +417,17 @@ export default function ChatLayout() {
           </div>
         )}
       </main>
+
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <SettingsModal 
+            isOpen={isSettingsOpen} 
+            onClose={() => setIsSettingsOpen(false)} 
+            user={user}
+            onUpdateUser={setUser}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,0 +1,272 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  X, 
+  User, 
+  Settings, 
+  Palette, 
+  Shield, 
+  ChevronRight,
+  Camera,
+  Check,
+  Loader2
+} from 'lucide-react';
+import api from '../api/client';
+
+export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
+  const [activeTab, setActiveTab] = useState('profile');
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    username: user?.username || '',
+    avatar: user?.avatar || '',
+    bio: user?.bio || '' // Future proofing
+  });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const tabs = [
+    { id: 'profile', icon: <User size={18}/>, label: 'Profile' },
+    { id: 'appearance', icon: <Palette size={18}/>, label: 'Appearance' },
+    { id: 'account', icon: <Shield size={18}/>, label: 'Account' },
+    { id: 'general', icon: <Settings size={18}/>, label: 'General' },
+  ];
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError('');
+    setSuccess(false);
+    try {
+      const { data } = await api.patch('/api/users/profile', {
+        username: formData.username,
+        avatar: formData.avatar
+      });
+      onUpdateUser(data.user);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      {/* Backdrop */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+      />
+
+      {/* Modal */}
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        className="relative w-full max-w-4xl h-[600px] bg-bg-surface/80 border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col sm:flex-row backdrop-blur-3xl"
+      >
+        {/* Glow Effects */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+           <div className="absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-brand/10 blur-[100px] rounded-full" />
+           <div className="absolute -bottom-[20%] -right-[20%] w-[40%] h-[40%] bg-indigo-500/10 blur-[80px] rounded-full" />
+        </div>
+
+        {/* Sidebar Nav */}
+        <div className="w-full sm:w-64 border-b sm:border-b-0 sm:border-r border-white/5 p-6 flex flex-col z-10">
+          <div className="mb-8 px-2">
+            <h2 className="text-xl font-black text-text-primary tracking-tight">Settings</h2>
+            <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-1 opacity-50">Local Preferences</p>
+          </div>
+          <nav className="space-y-1">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex w-full items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all relative overflow-hidden ${
+                  activeTab === tab.id 
+                    ? "text-brand" 
+                    : "text-text-secondary hover:bg-white/5 hover:text-text-primary"
+                }`}
+              >
+                {activeTab === tab.id && (
+                  <motion.div layoutId="active-tab-bg" className="absolute inset-0 bg-brand/5 z-0" />
+                )}
+                <span className="relative z-10">{tab.icon}</span>
+                <span className="relative z-10 flex-1 text-left">{tab.label}</span>
+                {activeTab === tab.id && <motion.div layoutId="active-tab-indicator" className="relative z-10 w-1.5 h-1.5 rounded-full bg-brand" />}
+              </button>
+            ))}
+          </nav>
+
+          <div className="mt-auto pt-6 border-t border-white/5 px-2">
+            <div className="flex items-center gap-3 opacity-40">
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black italic">v1.2</div>
+              <p className="text-[10px] font-bold text-text-muted">Relay Desktop App</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 flex flex-col z-10 overflow-hidden bg-white/2">
+          <header className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+            <h3 className="text-lg font-black text-text-primary uppercase tracking-wider">{tabs.find(t => t.id === activeTab).label}</h3>
+            <button 
+              onClick={onClose}
+              className="p-2 text-text-muted hover:text-brand hover:bg-brand/5 rounded-xl transition-all"
+            >
+              <X size={20} />
+            </button>
+          </header>
+
+          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <AnimatePresence mode="wait">
+              {activeTab === 'profile' && (
+                <motion.div
+                  key="profile-tab"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-8"
+                >
+                  {/* Avatar Section */}
+                  <div className="flex flex-col sm:flex-row items-center gap-8">
+                    <div className="relative group">
+                      <div className="w-24 h-24 rounded-3xl bg-brand/10 border-2 border-dashed border-brand/30 flex items-center justify-center overflow-hidden">
+                        {formData.avatar ? (
+                          <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <User size={40} className="text-brand/40" />
+                        )}
+                      </div>
+                      <button className="absolute -bottom-2 -right-2 p-2 bg-brand text-white rounded-xl shadow-lg shadow-brand/20 hover:scale-110 transition-transform">
+                        <Camera size={16} />
+                      </button>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <label className="text-sm font-black text-text-primary uppercase tracking-widest opacity-60">Profile Picture</label>
+                      <input 
+                        type="text" 
+                        placeholder="Avatar URL (https://...)" 
+                        value={formData.avatar}
+                        onChange={(e) => setFormData({...formData, avatar: e.target.value})}
+                        className="w-full bg-bg-base/40 border border-white/5 rounded-2xl py-3 px-5 text-sm outline-none focus:ring-4 focus:ring-brand/10 transition-all font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Username Section */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-black text-text-primary uppercase tracking-widest opacity-60">Display Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="Username" 
+                      value={formData.username}
+                      onChange={(e) => setFormData({...formData, username: e.target.value})}
+                      className="w-full bg-bg-base/40 border border-white/5 rounded-2xl py-4 px-6 text-base outline-none focus:ring-4 focus:ring-brand/10 transition-all font-bold tracking-tight"
+                    />
+                    <p className="text-xs text-text-muted font-medium ml-1">This is how others will see you in channels.</p>
+                  </div>
+
+                  {/* Bio Section */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-black text-text-primary uppercase tracking-widest opacity-60">About Me</label>
+                    <textarea 
+                      rows="3"
+                      placeholder="Tell us a bit about yourself..." 
+                      className="w-full bg-bg-base/40 border border-white/5 rounded-2xl py-4 px-6 text-base outline-none focus:ring-4 focus:ring-brand/10 transition-all font-medium resize-none"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'appearance' && (
+                <motion.div
+                  key="appearance-tab"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-8"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <AppearanceCard label="Dark Mode" defaultChecked />
+                    <AppearanceCard label="Mesh Backgrounds" defaultChecked />
+                    <AppearanceCard label="Glassmorphism" defaultChecked />
+                    <AppearanceCard label="Compact View" />
+                  </div>
+                  
+                  <div className="p-6 rounded-3xl bg-brand/5 border border-brand/10 space-y-4">
+                     <div className="flex items-center gap-3">
+                        <div className="p-2 bg-brand/20 text-brand rounded-xl"><Palette size={20}/></div>
+                        <h4 className="font-black text-text-primary">Theme Accent</h4>
+                     </div>
+                     <div className="flex gap-3">
+                        <ColorCircle color="#6366f1" active />
+                        <ColorCircle color="#ec4899" />
+                        <ColorCircle color="#10b981" />
+                        <ColorCircle color="#f59e0b" />
+                        <ColorCircle color="#ef4444" />
+                     </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <footer className="p-8 border-t border-white/5 flex items-center justify-between">
+            <div className="flex-1 mr-8">
+              {error && <p className="text-xs font-bold text-danger animate-shake">{error}</p>}
+              {success && <p className="text-xs font-bold text-success flex items-center gap-2"><Check size={14}/> Settings updated successfully!</p>}
+            </div>
+            <button 
+              disabled={isSaving}
+              onClick={handleSave}
+              className="btn-primary px-10 py-3.5 rounded-2xl flex items-center gap-3 relative"
+            >
+              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+              <span className="font-black uppercase tracking-widest text-sm">Save Changes</span>
+            </button>
+          </footer>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function AppearanceCard({ label, defaultChecked }) {
+  const [checked, setChecked] = useState(defaultChecked);
+  return (
+    <div 
+      onClick={() => setChecked(!checked)}
+      className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+        checked ? "bg-white/5 border-white/10" : "bg-transparent border-white/5 opacity-50"
+      }`}
+    >
+      <span className="font-bold text-sm text-text-primary">{label}</span>
+      <div className={`w-10 h-6 rounded-full relative transition-colors ${checked ? "bg-brand" : "bg-white/20"}`}>
+        <motion.div 
+          animate={{ x: checked ? 18 : 2 }}
+          initial={false}
+          className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ColorCircle({ color, active }) {
+  return (
+    <div 
+      className={`w-8 h-8 rounded-full cursor-pointer transition-all hover:scale-110 flex items-center justify-center p-1 ${
+        active ? "ring-2 ring-white ring-offset-2 ring-offset-bg-surface" : ""
+      }`}
+      style={{ backgroundColor: color }}
+    >
+      {active && <Check size={14} className="text-white" />}
+    </div>
+  );
+}
