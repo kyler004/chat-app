@@ -10,15 +10,19 @@ export const AuthProvider = ({ children }) => {
 
   // On app load, check if we have a valid token
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      api.get('/api/auth/me')
-        .then(({ data }) => setUser(data.user))
-        .catch(() => localStorage.removeItem('token'))
-        .finally(() => setLoading(false));
-    } else {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const { data } = await api.get('/api/auth/me');
+          setUser(data.user);
+        } catch {
+          localStorage.removeItem('token');
+        }
+      }
       setLoading(false);
-    }
+    };
+    checkAuth();
   }, []);
 
   const register = async (username, email, password) => {
@@ -43,7 +47,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
