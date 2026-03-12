@@ -33,6 +33,15 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Account Tab States
+  const [accountFormData, setAccountFormData] = useState({
+    currentPassword: '',
+    newPassword: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
   // Mock states for general/account tabs
   const [notifications, setNotifications] = useState(true);
   const [soundAlerts, setSoundAlerts] = useState(true);
@@ -61,6 +70,43 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
       setError(err.response?.data?.error || 'Failed to update profile');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!accountFormData.currentPassword || !accountFormData.newPassword) {
+      setError('Please provide both current and new passwords');
+      return;
+    }
+    setIsChangingPassword(true);
+    setError('');
+    setSuccess(false);
+    try {
+      await api.patch('/api/users/password', accountFormData);
+      setSuccess(true);
+      setAccountFormData({ currentPassword: '', newPassword: '' });
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      setError('Please type DELETE to confirm account deletion');
+      return;
+    }
+    setIsDeletingAccount(true);
+    setError('');
+    try {
+      await api.delete('/api/users/account');
+      // Token is invalidated, close modal and trigger logout (handled by interceptor usually, or force reload)
+      window.location.reload();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete account');
+      setIsDeletingAccount(false);
     }
   };
 
@@ -284,9 +330,32 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                          <p className="text-xs text-text-muted font-medium ml-1">Contact support to change your email address.</p>
                        </div>
                        
-                       <button className="flex w-full sm:w-auto items-center justify-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all font-bold text-sm text-text-primary">
-                         <Key size={16} className="text-brand" /> Change Password
-                       </button>
+                       <div className="space-y-3">
+                         <div className="space-y-2">
+                           <input 
+                             type="password" 
+                             placeholder="Current Password" 
+                             value={accountFormData.currentPassword}
+                             onChange={(e) => setAccountFormData({...accountFormData, currentPassword: e.target.value})}
+                             className="w-full bg-bg-base/40 border border-white/5 rounded-xl py-3 px-5 text-sm outline-none focus:ring-4 focus:ring-brand/10 transition-all font-medium"
+                           />
+                           <input 
+                             type="password" 
+                             placeholder="New Password" 
+                             value={accountFormData.newPassword}
+                             onChange={(e) => setAccountFormData({...accountFormData, newPassword: e.target.value})}
+                             className="w-full bg-bg-base/40 border border-white/5 rounded-xl py-3 px-5 text-sm outline-none focus:ring-4 focus:ring-brand/10 transition-all font-medium"
+                           />
+                         </div>
+                         <button 
+                           onClick={handleChangePassword}
+                           disabled={isChangingPassword}
+                           className="flex w-full sm:w-auto items-center justify-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all font-bold text-sm text-text-primary disabled:opacity-50"
+                         >
+                           {isChangingPassword ? <Loader2 size={16} className="text-brand animate-spin" /> : <Key size={16} className="text-brand" />} 
+                           Change Password
+                         </button>
+                       </div>
                     </div>
                   </div>
 
@@ -297,10 +366,24 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                     </div>
                     
                     <div className="space-y-2">
-                       <p className="text-sm font-medium text-text-secondary">Permanently remove your account and all of its data. This action is not reversible.</p>
-                       <button className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/20 rounded-2xl transition-all font-bold text-sm">
-                         <Trash2 size={16} /> Delete Account
-                       </button>
+                       <p className="text-sm font-medium text-text-secondary">Permanently remove your account and all of its data. This action is not reversible. Type <strong>DELETE</strong> below to confirm.</p>
+                       <div className="flex flex-col gap-3">
+                         <input 
+                           type="text" 
+                           placeholder="Type DELETE" 
+                           value={deleteConfirmation}
+                           onChange={(e) => setDeleteConfirmation(e.target.value)}
+                           className="w-full max-w-xs bg-bg-base/40 border border-danger/20 rounded-xl py-3 px-5 text-sm outline-none focus:ring-4 focus:ring-danger/10 transition-all font-bold tracking-widest text-danger placeholder:text-danger/30"
+                         />
+                         <button 
+                           onClick={handleDeleteAccount}
+                           disabled={isDeletingAccount || deleteConfirmation !== 'DELETE'}
+                           className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/20 rounded-2xl transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                         >
+                           {isDeletingAccount ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} 
+                           Delete Account
+                         </button>
+                       </div>
                     </div>
                   </div>
                 </motion.div>
@@ -364,14 +447,16 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
               {error && <p className="text-xs font-bold text-danger animate-shake">{error}</p>}
               {success && <p className="text-xs font-bold text-success flex items-center gap-2"><Check size={14}/> Settings updated successfully!</p>}
             </div>
-            <button 
-              disabled={isSaving}
-              onClick={handleSave}
-              className="btn-primary px-10 py-3.5 rounded-2xl flex items-center gap-3 relative"
-            >
-              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-              <span className="font-black uppercase tracking-widest text-sm">Save Changes</span>
-            </button>
+            {activeTab === 'profile' && (
+              <button 
+                disabled={isSaving}
+                onClick={handleSave}
+                className="btn-primary px-10 py-3.5 rounded-2xl flex items-center gap-3 relative"
+              >
+                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+                <span className="font-black uppercase tracking-widest text-sm">Save Changes</span>
+              </button>
+            )}
           </footer>
         </div>
       </motion.div>
