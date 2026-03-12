@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #6366f1;
-  --color-brand-hover: #4f46e5;
+  --color-brand: var(--accent);
+  --color-brand-hover: color-mix(in srgb, var(--accent) 80%, black 20%);
   --color-bg-base: #09090b;
   --color-bg-surface: #18181b;
   --color-bg-elevated: #27272a;
@@ -15,16 +15,16 @@
 
 @layer base {
   :root {
-    --bg-base: #09090b;
-    --bg-surface: #18181b;
-    --bg-elevated: #27272a;
-    --bg-hover: #3f3f46;
-    --border: #27272a;
+    --bg-base: #fafafa;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f4f4f5;
+    --bg-hover: #e4e4e7;
+    --border: #e4e4e7;
     --accent: #6366f1;
-    --accent-glow: rgba(99, 102, 241, 0.15);
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-muted: #717170;
+    --accent-glow: rgba(99, 102, 241, 0.1);
+    --text-primary: #09090b;
+    --text-secondary: #52525b;
+    --text-muted: #71717a;
     --success: #10b981;
     --danger: #ef4444;
     --radius-sm: 8px;
@@ -32,9 +32,21 @@
     --radius-lg: 20px;
   }
 
+  :root.dark {
+    --bg-base: #09090b;
+    --bg-surface: #18181b;
+    --bg-elevated: #27272a;
+    --bg-hover: #3f3f46;
+    --border: #27272a;
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #717170;
+  }
+
   * {
     @apply border-border-subtle;
     box-sizing: border-box;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   }
 
   body {
@@ -42,8 +54,18 @@
     font-family: "DM Sans", sans-serif;
     height: 100vh;
     overflow: hidden;
-    background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #09090b 80%);
+    background: radial-gradient(circle at 50% -20%, var(--accent-glow) 0%, var(--bg-base) 80%);
   }
+
+  .compact-mode {
+    --radius-lg: 12px;
+    --radius-md: 8px;
+  }
+  
+  .compact-mode .py-10 { @apply py-4; }
+  .compact-mode .space-y-10 { @apply space-y-4; }
+  .compact-mode .h-20 { @apply h-14; }
+  .compact-mode .p-8 { @apply p-4; }
 
   #root {
     height: 100vh;
