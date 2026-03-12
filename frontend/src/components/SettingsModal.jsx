@@ -12,8 +12,10 @@ import {
   Loader2
 } from 'lucide-react';
 import api from '../api/client';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
+  const { theme, updateTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -193,10 +195,26 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                   className="space-y-8"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <AppearanceCard label="Dark Mode" defaultChecked />
-                    <AppearanceCard label="Mesh Backgrounds" defaultChecked />
-                    <AppearanceCard label="Glassmorphism" defaultChecked />
-                    <AppearanceCard label="Compact View" />
+                    <AppearanceCard 
+                      label="Dark Mode" 
+                      checked={theme.darkMode} 
+                      onChange={(val) => updateTheme({ darkMode: val })} 
+                    />
+                    <AppearanceCard 
+                      label="Mesh Backgrounds" 
+                      checked={theme.meshBackground} 
+                      onChange={(val) => updateTheme({ meshBackground: val })} 
+                    />
+                    <AppearanceCard 
+                      label="Glassmorphism" 
+                      checked={theme.glassmorphism} 
+                      onChange={(val) => updateTheme({ glassmorphism: val })} 
+                    />
+                    <AppearanceCard 
+                      label="Compact View" 
+                      checked={theme.compactView} 
+                      onChange={(val) => updateTheme({ compactView: val })} 
+                    />
                   </div>
                   
                   <div className="p-6 rounded-3xl bg-brand/5 border border-brand/10 space-y-4">
@@ -205,11 +223,22 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                         <h4 className="font-black text-text-primary">Theme Accent</h4>
                      </div>
                      <div className="flex gap-3">
-                        <ColorCircle color="#6366f1" active />
-                        <ColorCircle color="#ec4899" />
-                        <ColorCircle color="#10b981" />
-                        <ColorCircle color="#f59e0b" />
-                        <ColorCircle color="#ef4444" />
+                        {[
+                          '#6366f1', // Indigo (Default)
+                          '#ec4899', // Pink
+                          '#10b981', // Emerald
+                          '#f59e0b', // Amber
+                          '#ef4444', // Red
+                          '#8b5cf6', // Violet
+                          '#0ea5e9'  // Sky
+                        ].map(color => (
+                          <ColorCircle 
+                            key={color} 
+                            color={color} 
+                            active={theme.accentColor === color} 
+                            onClick={() => updateTheme({ accentColor: color })}
+                          />
+                        ))}
                      </div>
                   </div>
                 </motion.div>
@@ -237,19 +266,19 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
   );
 }
 
-function AppearanceCard({ label, defaultChecked }) {
-  const [checked, setChecked] = useState(defaultChecked);
+function AppearanceCard({ label, checked, onChange }) {
   return (
     <div 
-      onClick={() => setChecked(!checked)}
+      onClick={() => onChange(!checked)}
       className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-        checked ? "bg-white/5 border-white/10" : "bg-transparent border-white/5 opacity-50"
+        checked ? "bg-white/5 border-white/10 shadow-sm" : "bg-transparent border-white/5 opacity-50"
       }`}
     >
       <span className="font-bold text-sm text-text-primary">{label}</span>
       <div className={`w-10 h-6 rounded-full relative transition-colors ${checked ? "bg-brand" : "bg-white/20"}`}>
         <motion.div 
           animate={{ x: checked ? 18 : 2 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
           initial={false}
           className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
         />
@@ -258,11 +287,12 @@ function AppearanceCard({ label, defaultChecked }) {
   );
 }
 
-function ColorCircle({ color, active }) {
+function ColorCircle({ color, active, onClick }) {
   return (
     <div 
+      onClick={onClick}
       className={`w-8 h-8 rounded-full cursor-pointer transition-all hover:scale-110 flex items-center justify-center p-1 ${
-        active ? "ring-2 ring-white ring-offset-2 ring-offset-bg-surface" : ""
+        active ? "ring-2 ring-white ring-offset-2 ring-offset-bg-surface scale-110" : "opacity-70 hover:opacity-100"
       }`}
       style={{ backgroundColor: color }}
     >

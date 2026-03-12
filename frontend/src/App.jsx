@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { ThemeProvider } from './context/ThemeContext';
 import AuthPage from './components/AuthPage';
 import ChatLayout from './components/ChatLayout';
 
@@ -22,8 +23,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

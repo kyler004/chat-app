@@ -4,6 +4,7 @@ import { useSocket } from '../hooks/useSocket';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import SettingsModal from './SettingsModal';
+import { useTheme } from '../context/ThemeContext';
 import { 
   Hash, 
   SendHorizontal, 
@@ -26,6 +27,7 @@ import {
 
 export default function ChatLayout() {
   const { user, setUser, logout } = useAuth();
+  const { theme } = useTheme();
   const socket = useSocket(user);
   const [rooms, setRooms] = useState([]);
   const [activeRoom, setActiveRoom] = useState(null);
@@ -115,12 +117,14 @@ export default function ChatLayout() {
     : messages;
 
   return (
-    <div className="flex h-screen w-full bg-bg-base overflow-hidden font-sans decoration-none">
+    <div className={`flex h-screen w-full bg-bg-base overflow-hidden font-sans decoration-none ${theme.compactView ? 'compact-mode' : ''}`}>
       {/* Mesh Background for Main Content */}
-      <div className="mesh-gradient opacity-10">
-        <div className="mesh-ball left-0 top-0" />
-        <div className="mesh-ball right-0 bottom-0 bg-indigo-500/30" />
-      </div>
+      {theme.meshBackground && (
+        <div className="mesh-gradient opacity-10">
+          <div className="mesh-ball left-0 top-0" />
+          <div className="mesh-ball right-0 bottom-0 bg-indigo-500/30" />
+        </div>
+      )}
 
       {/* ── Sidebar ───────────────────────────────── */}
       <AnimatePresence mode="popLayout" initial={false}>
@@ -362,7 +366,7 @@ export default function ChatLayout() {
 
             {/* Input */}
             <footer className="p-8 pt-0">
-              <div className="relative glass-card rounded-4xl p-3 border-white/10 ring-1 ring-white/5 shadow-2xl focus-within:ring-brand/30 transition-all bg-bg-surface/30 backdrop-blur-3xl">
+              <div className={`relative rounded-4xl p-3 border-white/10 ring-1 ring-white/5 shadow-2xl focus-within:ring-brand/30 transition-all bg-bg-surface/30 backdrop-blur-3xl ${theme.glassmorphism ? 'glass-card' : 'bg-bg-surface'}`}>
                 <div className="flex items-end gap-3 px-3">
                   <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all mb-1"><Paperclip size={22} /></button>
                   <div className="flex-1 py-4">
