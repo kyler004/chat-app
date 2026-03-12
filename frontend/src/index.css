@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #6366f1;
-  --color-brand-hover: #4f46e5;
+  --color-brand: var(--accent);
+  --color-brand-hover: color-mix(in srgb, var(--accent) 80%, black 20%);
   --color-bg-base: #09090b;
   --color-bg-surface: #18181b;
   --color-bg-elevated: #27272a;

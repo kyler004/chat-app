@@ -70,13 +70,15 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="relative w-full max-w-4xl h-[600px] bg-bg-surface/80 border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col sm:flex-row backdrop-blur-3xl"
+        className={`relative w-full max-w-4xl h-[600px] border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col sm:flex-row ${theme.glassmorphism ? 'bg-bg-surface/80 backdrop-blur-3xl' : 'bg-bg-surface'}`}
       >
         {/* Glow Effects */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-           <div className="absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-brand/10 blur-[100px] rounded-full" />
-           <div className="absolute -bottom-[20%] -right-[20%] w-[40%] h-[40%] bg-indigo-500/10 blur-[80px] rounded-full" />
-        </div>
+        {theme.meshBackground && (
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+             <div className="absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-brand/10 blur-[100px] rounded-full" />
+             <div className="absolute -bottom-[20%] -right-[20%] w-[40%] h-[40%] bg-indigo-500/10 blur-[80px] rounded-full" />
+          </div>
+        )}
 
         {/* Sidebar Nav */}
         <div className="w-full sm:w-64 border-b sm:border-b-0 sm:border-r border-white/5 p-6 flex flex-col z-10">
