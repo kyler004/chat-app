@@ -9,7 +9,14 @@ import {
   ChevronRight,
   Camera,
   Check,
-  Loader2
+  Loader2,
+  Bell,
+  Monitor,
+  Volume2,
+  Globe,
+  Trash2,
+  Key,
+  ShieldAlert
 } from 'lucide-react';
 import api from '../api/client';
 import { useTheme } from '../context/ThemeContext';
@@ -25,6 +32,11 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Mock states for general/account tabs
+  const [notifications, setNotifications] = useState(true);
+  const [soundAlerts, setSoundAlerts] = useState(true);
+  const [launchStartup, setLaunchStartup] = useState(true);
 
   const tabs = [
     { id: 'profile', icon: <User size={18}/>, label: 'Profile' },
@@ -197,22 +209,22 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                   className="space-y-8"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <AppearanceCard 
+                    <ToggleCard 
                       label="Dark Mode" 
                       checked={theme.darkMode} 
                       onChange={(val) => updateTheme({ darkMode: val })} 
                     />
-                    <AppearanceCard 
+                    <ToggleCard 
                       label="Mesh Backgrounds" 
                       checked={theme.meshBackground} 
                       onChange={(val) => updateTheme({ meshBackground: val })} 
                     />
-                    <AppearanceCard 
+                    <ToggleCard 
                       label="Glassmorphism" 
                       checked={theme.glassmorphism} 
                       onChange={(val) => updateTheme({ glassmorphism: val })} 
                     />
-                    <AppearanceCard 
+                    <ToggleCard 
                       label="Compact View" 
                       checked={theme.compactView} 
                       onChange={(val) => updateTheme({ compactView: val })} 
@@ -245,6 +257,105 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                   </div>
                 </motion.div>
               )}
+
+              {activeTab === 'account' && (
+                <motion.div
+                  key="account-tab"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-8"
+                >
+                  <div className="p-6 rounded-3xl bg-brand/5 border border-brand/10 space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-brand/20 text-brand rounded-xl"><Shield size={20}/></div>
+                      <h4 className="font-black text-text-primary">Security Settings</h4>
+                    </div>
+                    
+                    <div className="space-y-4">
+                       <div className="space-y-2">
+                         <label className="text-sm font-black text-text-primary uppercase tracking-widest opacity-60">Email Address</label>
+                         <input 
+                           type="email" 
+                           defaultValue={user?.email || 'user@example.com'} 
+                           disabled
+                           className="w-full bg-black/20 border border-white/5 rounded-2xl py-3 px-5 text-sm outline-none opacity-70 cursor-not-allowed font-medium"
+                         />
+                         <p className="text-xs text-text-muted font-medium ml-1">Contact support to change your email address.</p>
+                       </div>
+                       
+                       <button className="flex w-full sm:w-auto items-center justify-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all font-bold text-sm text-text-primary">
+                         <Key size={16} className="text-brand" /> Change Password
+                       </button>
+                    </div>
+                  </div>
+
+                  <div className="p-6 rounded-3xl bg-danger/5 border border-danger/10 space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-danger/20 text-danger rounded-xl"><ShieldAlert size={20}/></div>
+                      <h4 className="font-black text-danger tracking-tight text-lg">Danger Zone</h4>
+                    </div>
+                    
+                    <div className="space-y-2">
+                       <p className="text-sm font-medium text-text-secondary">Permanently remove your account and all of its data. This action is not reversible.</p>
+                       <button className="flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/20 rounded-2xl transition-all font-bold text-sm">
+                         <Trash2 size={16} /> Delete Account
+                       </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'general' && (
+                <motion.div
+                  key="general-tab"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="space-y-8"
+                >
+                  <div className="space-y-4">
+                     <div className="flex items-center gap-3 mb-2 px-2">
+                        <Bell size={18} className="text-text-muted" />
+                        <h4 className="font-black text-text-primary text-sm uppercase tracking-widest opacity-60">Notifications</h4>
+                     </div>
+                     <ToggleCard 
+                       label="Desktop Notifications" 
+                       checked={notifications} 
+                       onChange={setNotifications} 
+                     />
+                     <ToggleCard 
+                       label="Sound Alerts" 
+                       checked={soundAlerts} 
+                       onChange={setSoundAlerts} 
+                     />
+                  </div>
+
+                  <div className="space-y-4">
+                     <div className="flex items-center gap-3 mb-2 px-2">
+                        <Monitor size={18} className="text-text-muted" />
+                        <h4 className="font-black text-text-primary text-sm uppercase tracking-widest opacity-60">App Behavior</h4>
+                     </div>
+                     <ToggleCard 
+                       label="Launch on System Startup" 
+                       checked={launchStartup} 
+                       onChange={setLaunchStartup} 
+                     />
+                  </div>
+
+                  <div className="space-y-4">
+                     <div className="flex items-center gap-3 mb-2 px-2">
+                        <Globe size={18} className="text-text-muted" />
+                        <h4 className="font-black text-text-primary text-sm uppercase tracking-widest opacity-60">Language & Region</h4>
+                     </div>
+                     <select className="w-full bg-bg-surface border border-white/5 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-brand/10 transition-all appearance-none cursor-pointer">
+                        <option value="en">English (US)</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                     </select>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
 
@@ -268,7 +379,7 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
   );
 }
 
-function AppearanceCard({ label, checked, onChange }) {
+function ToggleCard({ label, checked, onChange }) {
   return (
     <div 
       onClick={() => onChange(!checked)}
