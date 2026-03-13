@@ -23,7 +23,8 @@ import {
   Sparkles,
   MoreVertical,
   Smile,
-  X
+  X,
+  Paperclip
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { playNotificationSound } from '../utils/audio';
