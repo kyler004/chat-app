@@ -141,22 +141,32 @@ export default function ChatLayout() {
     
     if (activeRoom.isDM) {
       socket.socket?.emit('message:send_dm', { conversationId: activeRoom.id, content: input.trim() });
+      socket.stopDMTyping(activeRoom.id);
     } else {
       socket.sendRoomMessage(activeRoom.id, input.trim());
+      socket.stopTyping(activeRoom.id);
     }
     
-    socket.stopTyping(activeRoom.id);
     setInput('');
   };
 
   const handleTyping = (value) => {
     setInput(value);
     if (!activeRoom) return;
-    socket.startTyping(activeRoom.id);
-    clearTimeout(typingTimer.current);
-    typingTimer.current = setTimeout(() => {
-      socket.stopTyping(activeRoom.id);
-    }, 1500); 
+    
+    if (activeRoom.isDM) {
+      socket.startDMTyping(activeRoom.id);
+      clearTimeout(typingTimer.current);
+      typingTimer.current = setTimeout(() => {
+        socket.stopDMTyping(activeRoom.id);
+      }, 1500);
+    } else {
+      socket.startTyping(activeRoom.id);
+      clearTimeout(typingTimer.current);
+      typingTimer.current = setTimeout(() => {
+        socket.stopTyping(activeRoom.id);
+      }, 1500); 
+    }
   };
 
   const handleLogout = () => {

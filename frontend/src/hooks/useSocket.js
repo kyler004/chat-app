@@ -66,6 +66,14 @@ export const useSocket = (user) => {
     socketRef.current?.emit('typing:stop', { roomId });
   }, []);
 
+  const startDMTyping = useCallback((conversationId) => {
+    socketRef.current?.emit('dm:typing:start', { conversationId });
+  }, []);
+
+  const stopDMTyping = useCallback((conversationId) => {
+    socketRef.current?.emit('dm:typing:stop', { conversationId });
+  }, []);
+
   // Listen for events — returns a cleanup function
   const onMessage = useCallback((callback) => {
     socketRef.current?.on('message:new', callback);
@@ -87,6 +95,7 @@ export const useSocket = (user) => {
     joinRoom, joinDM,
     sendRoomMessage, sendDM,
     startTyping, stopTyping,
+    startDMTyping, stopDMTyping,
     onMessage, onTyping,
     disconnect,
   };

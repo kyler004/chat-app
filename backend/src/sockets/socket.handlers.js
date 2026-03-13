@@ -167,6 +167,20 @@ export const registerSocketHandlers = (io) => {
       });
     });
 
+    socket.on("dm:typing:start", ({ conversationId }) => {
+      socket.to(`dm:${conversationId}`).emit("typing:update", {
+        user: socket.user,
+        isTyping: true,
+      });
+    });
+
+    socket.on("dm:typing:stop", ({ conversationId }) => {
+      socket.to(`dm:${conversationId}`).emit("typing:update", {
+        user: socket.user,
+        isTyping: false,
+      });
+    });
+
     // INVITE EVENTS
 
     socket.on("invite:send", ({ receiverId, invite }) => {
