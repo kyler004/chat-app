@@ -44,3 +44,71 @@ export const updateProfile = async (req, res) => {
 export const getMe = async (req, res) => {
   res.json({ user: req.user });
 };
+
+export const searchUsers = async (req, res) => {
+  const { q } = req.query;
+  const userId = req.user.id;
+
+  if (!q) {
+    return res.json({ users: [] });
+  }
+
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        username: {
+          contains: q,
+          mode: 'insensitive' // Optional, for case-insensitive search if supported (Postgres does)
+        },
+        NOT: { id: userId }
+      },
+      select: {
+        id: true,
+        username: true,
+        avatar: true
+      },
+      take: 20 // Limit results
+    });
+
+    res.json({ users });
+  } catch (error) {
+    console.error('Search users error:', error);
+    res.status(500).json({ error: 'Failed to search users' });
+  }
+};
+
+export const getMyDMs = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const dms = await prisma.dMConversation.findMany({
+      where: {
+        participants: {
+          some: { userId }
+        }
+      },
+      include: {
+        participants: {
+          include: {
+            user: { select: { id: true, username: true, avatar: true } }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formattedDMs = dms.map(dm => {
+      const otherUser = dm.participants.find(p => p.userId !== userId)?.user;
+      return {
+        ...dm,
+        isDM: true,
+        name: otherUser?.username || 'Unknown User',
+        avatar: otherUser?.avatar
+      };
+    });
+
+    res.json({ dms: formattedDMs });
+  } catch (error) {
+    console.error('Fetch DMs error:', error);
+    res.status(500).json({ error: 'Failed to fetch DMs' });
+  }
+};

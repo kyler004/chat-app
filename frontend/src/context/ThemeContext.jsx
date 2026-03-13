@@ -10,7 +10,10 @@ export const ThemeProvider = ({ children }) => {
       darkMode: true,
       meshBackground: true,
       glassmorphism: true,
-      compactView: false
+      compactView: false,
+      notifications: true,
+      soundAlerts: true,
+      launchStartup: true
     };
   });
 

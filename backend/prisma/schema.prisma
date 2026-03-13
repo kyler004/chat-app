@@ -25,6 +25,8 @@ model User {
   sentMessages     Message[]        @relation("SentMessages")
   roomMemberships  RoomMember[]
   dmParticipants   DMParticipant[]
+  sentInvites      ConversationInvite[] @relation("SentInvites")
+  receivedInvites  ConversationInvite[] @relation("ReceivedInvites")
 }
 
 // Group chat rooms
@@ -69,6 +71,27 @@ model DMParticipant {
   conversation DMConversation @relation(fields: [conversationId], references: [id])
 
   @@unique([userId, conversationId])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// Conversation Invites (friend requests)
+model ConversationInvite {
+  id         String       @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     InviteStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  sender   User @relation("SentInvites", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedInvites", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
 }
 
 // Single table for both Room and DM messages
