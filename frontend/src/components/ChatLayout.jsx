@@ -4,6 +4,8 @@ import { useSocket } from '../hooks/useSocket';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import SettingsModal from './SettingsModal';
+import DiscoverUsersModal from './DiscoverUsersModal';
+import InvitesModal from './InvitesModal';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Hash, 
@@ -38,20 +40,37 @@ export default function ChatLayout() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
+  const [isInvitesOpen, setIsInvitesOpen] = useState(false);
+  const [invites, setInvites] = useState([]);
   const typingTimer = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Load rooms on mount
+  // Load rooms and DMs on mount
   useEffect(() => {
-    api.get('/api/rooms').then(({ data }) => setRooms(data.rooms));
+    Promise.all([
+      api.get('/api/rooms').catch(() => ({ data: { rooms: [] } })),
+      api.get('/api/users/me/dms').catch(() => ({ data: { dms: [] } })),
+      api.get('/api/invites').catch(() => ({ data: { invites: [] } }))
+    ]).then(([roomsRes, dmsRes, invitesRes]) => {
+      setRooms([...(roomsRes.data.rooms || []), ...(dmsRes.data.dms || [])]);
+      setInvites(invitesRes.data.invites || []);
+    });
   }, []);
 
   // When active room changes — join it and load messages
   useEffect(() => {
     if (!activeRoom) return;
-    socket.joinRoom(activeRoom.id);
-    api.get(`/api/messages/room/${activeRoom.id}`)
-      .then(({ data }) => setMessages(data.messages || []));
+
+    if (activeRoom.isDM) {
+      socket.socket?.emit('dm:join', { conversationId: activeRoom.id });
+      api.get(`/api/messages/dm/${activeRoom.id}`)
+        .then(({ data }) => setMessages(data.messages || []));
+    } else {
+      socket.joinRoom(activeRoom.id);
+      api.get(`/api/messages/room/${activeRoom.id}`)
+        .then(({ data }) => setMessages(data.messages || []));
+    }
   }, [activeRoom, socket]);
 
   // Listen for new messages
@@ -83,6 +102,33 @@ export default function ChatLayout() {
     return cleanup;
   }, [socket]);
 
+  // Listen for invites
+  useEffect(() => {
+    const s = socket.socket;
+    if (!s) return;
+
+    const handleInviteReceived = ({ invite }) => {
+      setInvites((prev) => [invite, ...prev]);
+    };
+
+    const handleInviteAccepted = ({ conversation }) => {
+      // Refresh the incoming invites list or rooms.
+      // For now, let's just make sure we re-fetch invites so the matching one is gone.
+      api.get('/api/invites').then(({ data }) => setInvites(data.invites || []));
+      // And we might want to refresh DM rooms here, assuming they are interleaved in 'rooms'
+      // or we handle DMs in a separate state. For now, assuming they mix.
+      setRooms((prev) => [...prev, conversation]);
+    };
+
+    s.on('invite:received', handleInviteReceived);
+    s.on('invite:accepted', handleInviteAccepted);
+
+    return () => {
+      s.off('invite:received', handleInviteReceived);
+      s.off('invite:accepted', handleInviteAccepted);
+    };
+  }, [socket]);
+
   // Auto-scroll to latest message
   useEffect(() => {
     if (!isSearching) {
@@ -92,7 +138,13 @@ export default function ChatLayout() {
 
   const handleSend = () => {
     if (!input.trim() || !activeRoom) return;
-    socket.sendRoomMessage(activeRoom.id, input.trim());
+    
+    if (activeRoom.isDM) {
+      socket.socket?.emit('message:send_dm', { conversationId: activeRoom.id, content: input.trim() });
+    } else {
+      socket.sendRoomMessage(activeRoom.id, input.trim());
+    }
+    
     socket.stopTyping(activeRoom.id);
     setInput('');
   };
@@ -171,8 +223,25 @@ export default function ChatLayout() {
                 </div>
                 <div className="space-y-1">
                   <SidebarItem icon={<MessageSquare size={18}/>} label="All Messages" />
-                  <SidebarItem icon={<Users size={18}/>} label="Community" />
-                  <SidebarItem icon={<Bell size={18}/>} label="Notifications" badge="5" />
+                  <button 
+                    onClick={() => setIsDiscoverOpen(true)}
+                    className="flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all"
+                  >
+                    <span className="text-text-muted group-hover:text-brand transition-all"><Users size={18}/></span>
+                    <span className="flex-1 text-left">Discover Users</span>
+                  </button>
+                  <button 
+                    onClick={() => setIsInvitesOpen(true)}
+                    className="flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all relative"
+                  >
+                    <span className="text-text-muted group-hover:text-brand transition-all"><Bell size={18}/></span>
+                    <span className="flex-1 text-left">Notifications</span>
+                    {invites.filter(i => i.receiverId === user.id).length > 0 && (
+                      <span className="px-2.5 py-1 rounded-lg bg-brand shadow-lg shadow-brand/20 text-white text-[10px] font-black">
+                        {invites.filter(i => i.receiverId === user.id).length}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -429,6 +498,22 @@ export default function ChatLayout() {
             onClose={() => setIsSettingsOpen(false)} 
             user={user}
             onUpdateUser={setUser}
+          />
+        )}
+        {isDiscoverOpen && (
+          <DiscoverUsersModal 
+            isOpen={isDiscoverOpen} 
+            onClose={() => setIsDiscoverOpen(false)} 
+            user={user} 
+          />
+        )}
+        {isInvitesOpen && (
+          <InvitesModal 
+            isOpen={isInvitesOpen} 
+            onClose={() => setIsInvitesOpen(false)} 
+            invites={invites}
+            setInvites={setInvites}
+            user={user} 
           />
         )}
       </AnimatePresence>

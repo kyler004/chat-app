@@ -5,6 +5,9 @@ export const registerSocketHandlers = (io) => {
   io.on("connection", (socket) => {
     console.log(`🟢 User connected: ${socket.user.username} [${socket.id}]`);
 
+    // Add user to a personal room
+    socket.join(`user:${socket.user.id}`);
+
     // ROOM EVENTS
 
     //Client joins a chat room
@@ -162,6 +165,19 @@ export const registerSocketHandlers = (io) => {
         user: socket.user,
         isTyping: false,
       });
+    });
+
+    // INVITE EVENTS
+
+    socket.on("invite:send", ({ receiverId, invite }) => {
+      // Send to the receiver's personal room
+      io.to(`user:${receiverId}`).emit("invite:received", { invite });
+    });
+
+    socket.on("invite:accept", ({ senderId, receiverId, conversation }) => {
+      // Notify both the sender and the receiver about the new conversation
+      io.to(`user:${senderId}`).emit("invite:accepted", { conversation });
+      io.to(`user:${receiverId}`).emit("invite:accepted", { conversation });
     });
 
     // DISCONNECT

@@ -12,7 +12,7 @@ redis.on('error', (err) => console.error('❌ Redis error:', err));
 
 export const CACHE_KEYS = {
     roomMessages: (roomId) => `room:${roomId}:messages`, 
-    dmMessages: (convId) => `room:${convId}:messages`, 
+    dmMessages: (convId) => `dm:${convId}:messages`, 
     userRooms: (userId) => `room:${userId}:rooms`, 
 };
 

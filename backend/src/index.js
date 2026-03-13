@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.routes.js";
 import messageRoutes from "./routes/messages.routes.js";
 import roomRoutes from "./routes/room.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import inviteRoutes from "./routes/invite.routes.js";
 import { socketAuthMiddleware } from "./sockets/socket.middleware.js";
 import { registerSocketHandlers } from "./sockets/socket.handlers.js";
 
@@ -37,6 +38,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/invites", inviteRoutes);
 
 // WebSocket — auth runs before any event handler
 io.use(socketAuthMiddleware);
