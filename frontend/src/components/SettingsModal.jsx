@@ -33,10 +33,18 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Mock states for general/account tabs
-  const [notifications, setNotifications] = useState(true);
-  const [soundAlerts, setSoundAlerts] = useState(true);
-  const [launchStartup, setLaunchStartup] = useState(true);
+  // We use ThemeContext to store these generic preferences for simplicity
+  const [notifications, setNotifications] = useState(theme.notifications ?? true);
+  const [soundAlerts, setSoundAlerts] = useState(theme.soundAlerts ?? true);
+  const [launchStartup, setLaunchStartup] = useState(theme.launchStartup ?? true);
+
+  // Sync back to theme context when toggled
+  const handleToggle = (key, value) => {
+    if (key === 'notifications') setNotifications(value);
+    if (key === 'soundAlerts') setSoundAlerts(value);
+    if (key === 'launchStartup') setLaunchStartup(value);
+    updateTheme({ [key]: value });
+  };
 
   const tabs = [
     { id: 'profile', icon: <User size={18}/>, label: 'Profile' },
@@ -322,12 +330,12 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                      <ToggleCard 
                        label="Desktop Notifications" 
                        checked={notifications} 
-                       onChange={setNotifications} 
+                       onChange={(val) => handleToggle('notifications', val)} 
                      />
                      <ToggleCard 
                        label="Sound Alerts" 
                        checked={soundAlerts} 
-                       onChange={setSoundAlerts} 
+                       onChange={(val) => handleToggle('soundAlerts', val)} 
                      />
                   </div>
 
@@ -339,7 +347,7 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
                      <ToggleCard 
                        label="Launch on System Startup" 
                        checked={launchStartup} 
-                       onChange={setLaunchStartup} 
+                       onChange={(val) => handleToggle('launchStartup', val)} 
                      />
                   </div>
 

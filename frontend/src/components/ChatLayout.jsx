@@ -22,10 +22,11 @@ import {
   PanelLeftOpen,
   Sparkles,
   MoreVertical,
-  Paperclip,
   Smile,
   X
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { playNotificationSound } from '../utils/audio';
 
 export default function ChatLayout() {
   const { user, setUser, logout } = useAuth();
@@ -75,11 +76,29 @@ export default function ChatLayout() {
 
   // Listen for new messages
   useEffect(() => {
-    const cleanup = socket.onMessage(({ message }) => {
-      setMessages((prev) => [...prev, message]);
+    const cleanup = socket.onMessage(({ message, roomId, conversationId }) => {
+      // Determine if we should append the message to the current view
+      const incomingId = roomId || conversationId;
+      const isCurrentRoom = activeRoom?.id === incomingId;
+
+      if (isCurrentRoom) {
+        setMessages((prev) => [...prev, message]);
+      }
+
+      // If the message is from someone else, notify
+      if (message.senderId !== user.id) {
+        if (theme.notifications && !isCurrentRoom) {
+          toast(`New message from ${message.sender?.username}`, { icon: '💬' });
+        }
+        
+        // Play sound if not looking at the room, or if we want sounds all the time
+        if (theme.soundAlerts) {
+          playNotificationSound();
+        }
+      }
     });
     return cleanup;
-  }, [socket]);
+  }, [socket, activeRoom, user.id, theme.notifications, theme.soundAlerts]);
 
   // Listen for socket errors
   useEffect(() => {
@@ -109,6 +128,8 @@ export default function ChatLayout() {
 
     const handleInviteReceived = ({ invite }) => {
       setInvites((prev) => [invite, ...prev]);
+      if (theme.notifications) toast.success(`New invite from ${invite.sender.username}`);
+      if (theme.soundAlerts) playNotificationSound();
     };
 
     const handleInviteAccepted = ({ conversation }) => {
@@ -118,6 +139,8 @@ export default function ChatLayout() {
       // And we might want to refresh DM rooms here, assuming they are interleaved in 'rooms'
       // or we handle DMs in a separate state. For now, assuming they mix.
       setRooms((prev) => [...prev, conversation]);
+      if (theme.notifications) toast.success(`Invite accepted by ${conversation.name}`);
+      if (theme.soundAlerts) playNotificationSound();
     };
 
     s.on('invite:received', handleInviteReceived);
@@ -127,7 +150,7 @@ export default function ChatLayout() {
       s.off('invite:received', handleInviteReceived);
       s.off('invite:accepted', handleInviteAccepted);
     };
-  }, [socket]);
+  }, [socket, theme.notifications, theme.soundAlerts]);
 
   // Auto-scroll to latest message
   useEffect(() => {
