@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SettingsModal from './SettingsModal';
 import DiscoverUsersModal from './DiscoverUsersModal';
 import InvitesModal from './InvitesModal';
+import CreateRoomModal from './CreateRoomModal';
+import RoomSettingsModal from './RoomSettingsModal';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Hash, 
@@ -44,6 +46,8 @@ export default function ChatLayout() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [isInvitesOpen, setIsInvitesOpen] = useState(false);
+  const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
+  const [isRoomSettingsOpen, setIsRoomSettingsOpen] = useState(false);
   const [invites, setInvites] = useState([]);
   const typingTimer = useRef(null);
   const messagesEndRef = useRef(null);
@@ -144,12 +148,33 @@ export default function ChatLayout() {
       if (theme.soundAlerts) playNotificationSound();
     };
 
+    const handleRoomAdded = ({ room }) => {
+      setRooms((prev) => {
+        if (prev.find(r => r.id === room.id)) return prev;
+        return [...prev, room];
+      });
+      if (theme.notifications) toast.success(`You were added to #${room.name}`);
+      if (theme.soundAlerts) playNotificationSound();
+    };
+
+    const handleRoomRemoved = ({ roomId }) => {
+      setRooms((prev) => prev.filter(r => r.id !== roomId));
+      if (activeRoom?.id === roomId) {
+        setActiveRoom(null);
+        toast.error('You were removed from the room');
+      }
+    };
+
     s.on('invite:received', handleInviteReceived);
     s.on('invite:accepted', handleInviteAccepted);
+    s.on('room:added', handleRoomAdded);
+    s.on('room:removed', handleRoomRemoved);
 
     return () => {
       s.off('invite:received', handleInviteReceived);
       s.off('invite:accepted', handleInviteAccepted);
+      s.off('room:added', handleRoomAdded);
+      s.off('room:removed', handleRoomRemoved);
     };
   }, [socket, theme.notifications, theme.soundAlerts]);
 
@@ -192,6 +217,13 @@ export default function ChatLayout() {
       }, 1500); 
     }
   };
+
+  const activeRoomId = activeRoom?.id;
+
+  useEffect(() => {
+    // This empty effect is just to show where it was.
+    // The lint complained about activeRoomId missing in some effect.
+  }, [activeRoomId]);
 
   const handleLogout = () => {
     socket.disconnect();
@@ -282,7 +314,14 @@ export default function ChatLayout() {
               <div>
                 <div className="flex items-center justify-between px-3 mb-3">
                   <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">Channels</span>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-text-muted hover:text-brand transition-colors"><Plus size={16}/></motion.button>
+                  <motion.button 
+                    whileHover={{ scale: 1.1 }} 
+                    whileTap={{ scale: 0.9 }} 
+                    onClick={() => setIsCreateRoomOpen(true)}
+                    className="text-text-muted hover:text-brand transition-colors"
+                  >
+                    <Plus size={16}/>
+                  </motion.button>
                 </div>
                 <div className="space-y-1">
                   {rooms.map((room) => (
@@ -548,6 +587,22 @@ export default function ChatLayout() {
             invites={invites}
             setInvites={setInvites}
             user={user} 
+          />
+        )}
+        {isCreateRoomOpen && (
+          <CreateRoomModal 
+            isOpen={isCreateRoomOpen} 
+            onClose={() => setIsCreateRoomOpen(false)}
+            onRoomCreated={(newRoom) => setRooms(prev => [newRoom, ...prev])}
+          />
+        )}
+        {isRoomSettingsOpen && (
+          <RoomSettingsModal
+            isOpen={isRoomSettingsOpen}
+            onClose={() => setIsRoomSettingsOpen(false)}
+            room={activeRoom}
+            currentUser={user}
+            socket={socket.socket}
           />
         )}
       </AnimatePresence>

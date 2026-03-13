@@ -45,6 +45,7 @@ model RoomMember {
   id       String @id @default(uuid())
   userId   String
   roomId   String
+  role     RoomRole @default(MEMBER)
   joinedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
@@ -77,6 +78,11 @@ enum InviteStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+enum RoomRole {
+  ADMIN
+  MEMBER
 }
 
 // Conversation Invites (friend requests)
