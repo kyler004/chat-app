@@ -166,16 +166,34 @@ export default function ChatLayout() {
       }
     };
 
+    const handleRoomUpdated = ({ room: updatedRoom }) => {
+      setRooms((prev) => prev.map(r => r.id === updatedRoom.id ? { ...r, ...updatedRoom } : r));
+      if (activeRoom?.id === updatedRoom.id) {
+        setActiveRoom(prev => ({ ...prev, ...updatedRoom }));
+      }
+    };
+
+    const handleDMUpdated = ({ conversation: updatedDM }) => {
+      setRooms((prev) => prev.map(r => r.id === updatedDM.id ? { ...r, ...updatedDM } : r));
+      if (activeRoom?.id === updatedDM.id) {
+        setActiveRoom(prev => ({ ...prev, ...updatedDM }));
+      }
+    };
+
     s.on('invite:received', handleInviteReceived);
     s.on('invite:accepted', handleInviteAccepted);
     s.on('room:added', handleRoomAdded);
     s.on('room:removed', handleRoomRemoved);
+    s.on('room:updated', handleRoomUpdated);
+    s.on('dm:updated', handleDMUpdated);
 
     return () => {
       s.off('invite:received', handleInviteReceived);
       s.off('invite:accepted', handleInviteAccepted);
       s.off('room:added', handleRoomAdded);
       s.off('room:removed', handleRoomRemoved);
+      s.off('room:updated', handleRoomUpdated);
+      s.off('dm:updated', handleDMUpdated);
     };
   }, [socket, theme.notifications, theme.soundAlerts]);
 

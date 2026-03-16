@@ -218,6 +218,17 @@ export const registerSocketHandlers = (io) => {
       });
     });
 
+    // METADATA UPDATES
+    socket.on("room:update", ({ roomId, room }) => {
+      // Broadcast to everyone in the room
+      io.to(roomId).emit("room:updated", { room });
+    });
+
+    socket.on("dm:update", ({ conversationId, conversation }) => {
+      // Broadcast to participants in the DM conversation
+      io.to(`dm:${conversationId}`).emit("dm:updated", { conversation });
+    });
+
     // DISCONNECT
 
     socket.on("disconnect", (reason) => {

@@ -60,8 +60,21 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
       const endpoint = room.isDM ? `/api/dms/${room.id}` : `/api/rooms/${room.id}`;
       // Note: Backend rooms controller might need updateRoom implemented if we want to edit room descriptions here too.
       // But requirement specifically asked for DMs.
-      await api.put(endpoint, { description });
+      const { data: updatedData } = await api.put(endpoint, { description });
       toast.success('Description updated');
+
+      // Emit socket event for real-time updates
+      if (room.isDM) {
+        socket.emit('dm:update', { 
+          conversationId: room.id, 
+          conversation: updatedData.conversation 
+        });
+      } else {
+        socket.emit('room:update', { 
+          roomId: room.id, 
+          room: updatedData.room 
+        });
+      }
     } catch {
       toast.error('Failed to update description');
     } finally {
@@ -79,7 +92,7 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
 
     setIsSearching(true);
     try {
-      const { data } = await api.get(`/api/users/search?username=${query}`);
+      const { data } = await api.get(`/api/users/search?q=${query}`);
       // Filter out users already in the room
       const existingIds = new Set(members.map(m => m.userId));
       setSearchResults(data.users.filter(u => !existingIds.has(u.id)));
@@ -155,20 +168,28 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
                 <h4 className="font-black text-text-primary text-sm uppercase tracking-widest opacity-60">Description</h4>
              </div>
              <div className="space-y-3">
-                <textarea 
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Set a description for this chat..."
-                  className="w-full bg-bg-base/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:ring-4 focus:ring-brand/10 transition-all font-medium min-h-[100px] resize-none"
-                />
-                <button 
-                  onClick={updateDescription}
-                  disabled={isUpdating}
-                  className="w-full py-3 bg-brand text-white rounded-2xl font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isUpdating && <Loader2 size={16} className="animate-spin" />}
-                  Save Description
-                </button>
+                {isAdmin ? (
+                  <>
+                    <textarea 
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Set a description for this chat..."
+                      className="w-full bg-bg-base/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:ring-4 focus:ring-brand/10 transition-all font-medium min-h-[100px] resize-none"
+                    />
+                    <button 
+                      onClick={updateDescription}
+                      disabled={isUpdating}
+                      className="w-full py-3 bg-brand text-white rounded-2xl font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isUpdating && <Loader2 size={16} className="animate-spin" />}
+                      Save Description
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full bg-bg-base/20 border border-white/5 rounded-2xl p-6 text-sm font-medium text-text-muted italic">
+                    {description || "No description set for this conversation."}
+                  </div>
+                )}
              </div>
           </div>
 
