@@ -56,8 +56,9 @@ model RoomMember {
 
 // Direct messages — a "conversation" between 2 users
 model DMConversation {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  description String?
+  createdAt   DateTime @default(now())
 
   participants DMParticipant[]
   messages     Message[]

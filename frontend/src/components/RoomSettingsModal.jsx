@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Users, Search, UserPlus, UserMinus, Shield, ShieldCheck, Loader2 } from 'lucide-react';
+import { X, Users, Search, UserPlus, UserMinus, Shield, ShieldCheck, Loader2, Sparkles } from 'lucide-react';
 import api from '../api/client';
 import { useTheme } from '../context/ThemeContext';
 import toast from 'react-hot-toast';
@@ -12,27 +12,62 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
   const [searchResults, setSearchResults] = useState([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [_isSearching, setIsSearching] = useState(false);
+  const [currentRoom, setCurrentRoom] = useState(room);
+  const [description, setDescription] = useState(room?.description || '');
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Check if current user is admin
-  const isAdmin = room?.members?.some(m => m.userId === currentUser.id && m.role === 'ADMIN');
+  // Check if current user is admin using currentRoom data
+  const isAdmin = currentRoom?.isDM ? true : currentRoom?.members?.some(m => m.userId === currentUser.id && m.role === 'ADMIN');
 
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchDetails = async () => {
       setIsLoadingMembers(true);
       try {
-        const { data } = await api.get(`/api/rooms/${room.id}/members`);
-        setMembers(data.members);
+        const endpoint = room.isDM ? `/api/dms/${room.id}` : `/api/rooms/${room.id}/members`;
+        const { data } = await api.get(endpoint);
+        
+        if (room.isDM) {
+           // For DMs, 'data.conversation' should have participants
+           const membersList = data.conversation.participants.map(p => ({
+             id: p.id,
+             userId: p.userId,
+             user: p.user,
+             role: 'MEMBER' // DMs don't have roles in the same way yet
+           }));
+           setMembers(membersList);
+           setCurrentRoom({ ...data.conversation, members: membersList, isDM: true });
+           setDescription(data.conversation.description || '');
+        } else {
+           setMembers(data.members);
+           setCurrentRoom(prev => ({ ...prev, members: data.members }));
+           setDescription(room.description || '');
+        }
       } catch {
-        toast.error('Failed to fetch members');
+        toast.error('Failed to fetch details');
       } finally {
         setIsLoadingMembers(false);
       }
     };
 
     if (isOpen && room) {
-      fetchMembers();
+      fetchDetails();
     }
   }, [isOpen, room]);
+
+  const updateDescription = async () => {
+    setIsUpdating(true);
+    try {
+      const endpoint = room.isDM ? `/api/dms/${room.id}` : `/api/rooms/${room.id}`;
+      // Note: Backend rooms controller might need updateRoom implemented if we want to edit room descriptions here too.
+      // But requirement specifically asked for DMs.
+      await api.put(endpoint, { description });
+      toast.success('Description updated');
+    } catch {
+      toast.error('Failed to update description');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleSearch = async (e) => {
     const query = e.target.value;
@@ -103,8 +138,8 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
           <div className="flex items-center gap-3">
              <div className="p-2 bg-brand/10 text-brand rounded-xl"><Users size={20}/></div>
              <div>
-               <h3 className="text-lg font-black text-text-primary uppercase tracking-wider">Room Settings</h3>
-               <p className="text-xs text-text-muted font-bold tracking-tight opacity-60">#{room?.name}</p>
+               <h3 className="text-lg font-black text-text-primary uppercase tracking-wider">{room?.isDM ? 'Chat Settings' : 'Room Settings'}</h3>
+               <p className="text-xs text-text-muted font-bold tracking-tight opacity-60">{room?.isDM ? `@${room.name}` : `#${room.name}`}</p>
              </div>
           </div>
           <button onClick={onClose} className="p-2 text-text-muted hover:text-brand hover:bg-brand/5 rounded-xl transition-all">
@@ -113,8 +148,32 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
         </header>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-          {/* Add Members Section (Admin only) */}
-          {isAdmin && (
+          {/* Description Section (Always visible or editable) */}
+          <div className="space-y-4">
+             <div className="flex items-center gap-3 mb-2 px-1">
+                <Sparkles size={18} className="text-brand" />
+                <h4 className="font-black text-text-primary text-sm uppercase tracking-widest opacity-60">Description</h4>
+             </div>
+             <div className="space-y-3">
+                <textarea 
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Set a description for this chat..."
+                  className="w-full bg-bg-base/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:ring-4 focus:ring-brand/10 transition-all font-medium min-h-[100px] resize-none"
+                />
+                <button 
+                  onClick={updateDescription}
+                  disabled={isUpdating}
+                  className="w-full py-3 bg-brand text-white rounded-2xl font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isUpdating && <Loader2 size={16} className="animate-spin" />}
+                  Save Description
+                </button>
+             </div>
+          </div>
+
+          {/* Add Members Section (Admin only, Rooms only) */}
+          {isAdmin && !room?.isDM && (
             <div className="space-y-4">
                <div className="flex items-center gap-3 mb-2 px-1">
                   <UserPlus size={18} className="text-brand" />

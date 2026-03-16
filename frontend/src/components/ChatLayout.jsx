@@ -26,7 +26,8 @@ import {
   MoreVertical,
   Smile,
   X,
-  Paperclip
+  Paperclip,
+  Menu
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { playNotificationSound } from '../utils/audio';
@@ -446,10 +447,17 @@ export default function ChatLayout() {
                 <button 
                   onClick={() => setIsSettingsOpen(true)}
                   className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"
+                  title="Global Settings"
                 >
                   <Settings size={22} />
                 </button>
-                <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"><MoreVertical size={22} /></button>
+                <button 
+                  onClick={() => setIsRoomSettingsOpen(true)}
+                  className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"
+                  title="Conversation Settings"
+                >
+                  <Menu size={22} />
+                </button>
               </div>
             </header>
 

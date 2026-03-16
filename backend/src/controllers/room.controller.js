@@ -107,8 +107,33 @@ export const removeMember = async (req, res) => {
 
     res.json({ message: 'User removed from room' });
   } catch (error) {
-    console.error('Error removing member:', error);
     res.status(500).json({ error: 'Failed to remove member' });
+  }
+};
+
+export const updateRoom = async (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+
+  try {
+    // Check if the requester is an ADMIN of this room
+    const requester = await prisma.roomMember.findFirst({
+      where: { roomId: id, userId: req.user.id }
+    });
+
+    if (!requester || requester.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Only administrators can update room details' });
+    }
+
+    const updatedRoom = await prisma.room.update({
+      where: { id },
+      data: { name, description }
+    });
+
+    res.json({ room: updatedRoom });
+  } catch (error) {
+    console.error('Error updating room:', error);
+    res.status(500).json({ error: 'Failed to update room details' });
   }
 };
 
