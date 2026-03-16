@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SettingsModal from './SettingsModal';
 import DiscoverUsersModal from './DiscoverUsersModal';
 import InvitesModal from './InvitesModal';
+import CreateRoomModal from './CreateRoomModal';
+import RoomSettingsModal from './RoomSettingsModal';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Hash, 
@@ -24,7 +26,8 @@ import {
   MoreVertical,
   Smile,
   X,
-  Paperclip
+  Paperclip,
+  Menu
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { playNotificationSound } from '../utils/audio';
@@ -44,6 +47,8 @@ export default function ChatLayout() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [isInvitesOpen, setIsInvitesOpen] = useState(false);
+  const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
+  const [isRoomSettingsOpen, setIsRoomSettingsOpen] = useState(false);
   const [invites, setInvites] = useState([]);
   const typingTimer = useRef(null);
   const messagesEndRef = useRef(null);
@@ -144,12 +149,51 @@ export default function ChatLayout() {
       if (theme.soundAlerts) playNotificationSound();
     };
 
+    const handleRoomAdded = ({ room }) => {
+      setRooms((prev) => {
+        if (prev.find(r => r.id === room.id)) return prev;
+        return [...prev, room];
+      });
+      if (theme.notifications) toast.success(`You were added to #${room.name}`);
+      if (theme.soundAlerts) playNotificationSound();
+    };
+
+    const handleRoomRemoved = ({ roomId }) => {
+      setRooms((prev) => prev.filter(r => r.id !== roomId));
+      if (activeRoom?.id === roomId) {
+        setActiveRoom(null);
+        toast.error('You were removed from the room');
+      }
+    };
+
+    const handleRoomUpdated = ({ room: updatedRoom }) => {
+      setRooms((prev) => prev.map(r => r.id === updatedRoom.id ? { ...r, ...updatedRoom } : r));
+      if (activeRoom?.id === updatedRoom.id) {
+        setActiveRoom(prev => ({ ...prev, ...updatedRoom }));
+      }
+    };
+
+    const handleDMUpdated = ({ conversation: updatedDM }) => {
+      setRooms((prev) => prev.map(r => r.id === updatedDM.id ? { ...r, ...updatedDM } : r));
+      if (activeRoom?.id === updatedDM.id) {
+        setActiveRoom(prev => ({ ...prev, ...updatedDM }));
+      }
+    };
+
     s.on('invite:received', handleInviteReceived);
     s.on('invite:accepted', handleInviteAccepted);
+    s.on('room:added', handleRoomAdded);
+    s.on('room:removed', handleRoomRemoved);
+    s.on('room:updated', handleRoomUpdated);
+    s.on('dm:updated', handleDMUpdated);
 
     return () => {
       s.off('invite:received', handleInviteReceived);
       s.off('invite:accepted', handleInviteAccepted);
+      s.off('room:added', handleRoomAdded);
+      s.off('room:removed', handleRoomRemoved);
+      s.off('room:updated', handleRoomUpdated);
+      s.off('dm:updated', handleDMUpdated);
     };
   }, [socket, theme.notifications, theme.soundAlerts]);
 
@@ -192,6 +236,13 @@ export default function ChatLayout() {
       }, 1500); 
     }
   };
+
+  const activeRoomId = activeRoom?.id;
+
+  useEffect(() => {
+    // This empty effect is just to show where it was.
+    // The lint complained about activeRoomId missing in some effect.
+  }, [activeRoomId]);
 
   const handleLogout = () => {
     socket.disconnect();
@@ -282,7 +333,14 @@ export default function ChatLayout() {
               <div>
                 <div className="flex items-center justify-between px-3 mb-3">
                   <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">Channels</span>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-text-muted hover:text-brand transition-colors"><Plus size={16}/></motion.button>
+                  <motion.button 
+                    whileHover={{ scale: 1.1 }} 
+                    whileTap={{ scale: 0.9 }} 
+                    onClick={() => setIsCreateRoomOpen(true)}
+                    className="text-text-muted hover:text-brand transition-colors"
+                  >
+                    <Plus size={16}/>
+                  </motion.button>
                 </div>
                 <div className="space-y-1">
                   {rooms.map((room) => (
@@ -407,10 +465,17 @@ export default function ChatLayout() {
                 <button 
                   onClick={() => setIsSettingsOpen(true)}
                   className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"
+                  title="Global Settings"
                 >
                   <Settings size={22} />
                 </button>
-                <button className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"><MoreVertical size={22} /></button>
+                <button 
+                  onClick={() => setIsRoomSettingsOpen(true)}
+                  className="p-3 text-text-muted hover:text-brand hover:bg-brand/10 rounded-2xl transition-all"
+                  title="Conversation Settings"
+                >
+                  <Menu size={22} />
+                </button>
               </div>
             </header>
 
@@ -548,6 +613,22 @@ export default function ChatLayout() {
             invites={invites}
             setInvites={setInvites}
             user={user} 
+          />
+        )}
+        {isCreateRoomOpen && (
+          <CreateRoomModal 
+            isOpen={isCreateRoomOpen} 
+            onClose={() => setIsCreateRoomOpen(false)}
+            onRoomCreated={(newRoom) => setRooms(prev => [newRoom, ...prev])}
+          />
+        )}
+        {isRoomSettingsOpen && (
+          <RoomSettingsModal
+            isOpen={isRoomSettingsOpen}
+            onClose={() => setIsRoomSettingsOpen(false)}
+            room={activeRoom}
+            currentUser={user}
+            socket={socket.socket}
           />
         )}
       </AnimatePresence>

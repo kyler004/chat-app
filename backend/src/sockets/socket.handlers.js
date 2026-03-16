@@ -13,20 +13,20 @@ export const registerSocketHandlers = (io) => {
     //Client joins a chat room
     socket.on("room:join", async ({ roomId }) => {
       try {
-        // Automatically join the user to the room if they aren't a member (public forums)
-        await prisma.roomMember.upsert({
+        // 1. Double check membership (Rooms are now private)
+        const membership = await prisma.roomMember.findUnique({
           where: {
             userId_roomId: {
               userId: socket.user.id,
               roomId,
             },
           },
-          update: {},
-          create: {
-            userId: socket.user.id,
-            roomId,
-          },
         });
+
+        if (!membership) {
+          socket.emit("error", { message: "You are not a member of this room" });
+          return;
+        }
 
         // Join the Socket.io room (a named channel)
         socket.join(roomId);
@@ -192,6 +192,41 @@ export const registerSocketHandlers = (io) => {
       // Notify both the sender and the receiver about the new conversation
       io.to(`user:${senderId}`).emit("invite:accepted", { conversation });
       io.to(`user:${receiverId}`).emit("invite:accepted", { conversation });
+    });
+
+    // MEMBERSHIP EVENTS (For real-time Room list updates)
+
+    socket.on("room:member_added", ({ roomId, userId, member, room }) => {
+      // Notify the target user so they can add the room to their sidebar
+      io.to(`user:${userId}`).emit("room:added", { room });
+      
+      // Notify everyone in the room there's a new person
+      io.to(roomId).emit("room:user_joined", {
+        user: member.user,
+        roomId,
+      });
+    });
+
+    socket.on("room:member_removed", ({ roomId, userId }) => {
+      // Notify the target user so they can remove the room from their sidebar
+      io.to(`user:${userId}`).emit("room:removed", { roomId });
+
+      // Notify everyone else in the room
+      io.to(roomId).emit("room:user_left", {
+        userId,
+        roomId,
+      });
+    });
+
+    // METADATA UPDATES
+    socket.on("room:update", ({ roomId, room }) => {
+      // Broadcast to everyone in the room
+      io.to(roomId).emit("room:updated", { room });
+    });
+
+    socket.on("dm:update", ({ conversationId, conversation }) => {
+      // Broadcast to participants in the DM conversation
+      io.to(`dm:${conversationId}`).emit("dm:updated", { conversation });
     });
 
     // DISCONNECT

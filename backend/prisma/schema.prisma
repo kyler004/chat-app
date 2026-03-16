@@ -45,6 +45,7 @@ model RoomMember {
   id       String @id @default(uuid())
   userId   String
   roomId   String
+  role     RoomRole @default(MEMBER)
   joinedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
@@ -55,8 +56,9 @@ model RoomMember {
 
 // Direct messages — a "conversation" between 2 users
 model DMConversation {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  description String?
+  createdAt   DateTime @default(now())
 
   participants DMParticipant[]
   messages     Message[]
@@ -77,6 +79,11 @@ enum InviteStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+enum RoomRole {
+  ADMIN
+  MEMBER
 }
 
 // Conversation Invites (friend requests)
