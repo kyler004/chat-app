@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { io } from 'socket.io-client';
 
 let socketInstance = null; // module-level singleton
@@ -76,13 +76,15 @@ export const useSocket = (user) => {
 
   // Listen for events — returns a cleanup function
   const onMessage = useCallback((callback) => {
-    socketRef.current?.on('message:new', callback);
-    return () => socketRef.current?.off('message:new', callback);
+    const s = socketRef.current;
+    s?.on('message:new', callback);
+    return () => s?.off('message:new', callback);
   }, []);
 
   const onTyping = useCallback((callback) => {
-    socketRef.current?.on('typing:update', callback);
-    return () => socketRef.current?.off('typing:update', callback);
+    const s = socketRef.current;
+    s?.on('typing:update', callback);
+    return () => s?.off('typing:update', callback);
   }, []);
 
   const disconnect = useCallback(() => {
@@ -90,7 +92,7 @@ export const useSocket = (user) => {
     socketInstance = null;
   }, []);
 
-  return {
+  return useMemo(() => ({
     socket: socketInstance,
     joinRoom, joinDM,
     sendRoomMessage, sendDM,
@@ -98,5 +100,9 @@ export const useSocket = (user) => {
     startDMTyping, stopDMTyping,
     onMessage, onTyping,
     disconnect,
-  };
+  }), [
+    joinRoom, joinDM, sendRoomMessage, sendDM, 
+    startTyping, stopTyping, startDMTyping, stopDMTyping, 
+    onMessage, onTyping, disconnect
+  ]);
 };

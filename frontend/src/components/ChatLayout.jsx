@@ -209,7 +209,7 @@ export default function ChatLayout() {
       s.off('dm:updated', handleDMUpdated);
       s.off('message:deleted', handleMessageDeleted);
     };
-  }, [socket, theme.notifications, theme.soundAlerts]);
+  }, [socket, theme.notifications, theme.soundAlerts, activeRoom]);
 
   // Auto-scroll to latest message
   useEffect(() => {
