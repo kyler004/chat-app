@@ -20,7 +20,7 @@ export const getRoomMessages = async (req, res) => {
     // Cache miss, get from database
     console.log(`cache MISS for room ${roomId}`);
     const messages = await prisma.message.findMany({
-      where: { roomId },
+      where: { roomId, isDeleted: false },
       include: {
         sender: {
           select: { id: true, username: true, avatar: true },
@@ -55,7 +55,7 @@ export const getDMMessages = async (req, res) => {
     // Cache miss, get from database
     console.log(`cache MISS for DM ${conversationId}`);
     const messages = await prisma.message.findMany({
-      where: { conversationId },
+      where: { conversationId, isDeleted: false },
       include: {
         sender: {
           select: { id: true, username: true, avatar: true },

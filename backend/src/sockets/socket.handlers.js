@@ -229,6 +229,49 @@ export const registerSocketHandlers = (io) => {
       io.to(`dm:${conversationId}`).emit("dm:updated", { conversation });
     });
 
+    socket.on("message:delete", async ({ messageIds }) => {
+      try {
+        if (!Array.isArray(messageIds) || messageIds.length === 0) return;
+
+        // Fetch messages to verify ownership
+        const messagesToDelete = await prisma.message.findMany({
+          where: {
+            id: { in: messageIds },
+            senderId: socket.user.id,
+            isDeleted: false,
+          },
+        });
+
+        if (messagesToDelete.length === 0) return;
+
+        const verifiedIds = messagesToDelete.map((m) => m.id);
+
+        // Soft delete in database
+        await prisma.message.updateMany({
+          where: { id: { in: verifiedIds } },
+          data: { isDeleted: true },
+        });
+
+        // Invalidate caches for affected rooms/DMs
+        const roomIds = [...new Set(messagesToDelete.map((m) => m.roomId).filter(Boolean))];
+        const conversationIds = [...new Set(messagesToDelete.map((m) => m.conversationId).filter(Boolean))];
+
+        for (const rId of roomIds) {
+          await invalidateCache(CACHE_KEYS.roomMessages(rId));
+          io.to(rId).emit("message:deleted", { messageIds: verifiedIds, roomId: rId });
+        }
+
+        for (const cId of conversationIds) {
+          await invalidateCache(CACHE_KEYS.dmMessages(cId));
+          io.to(`dm:${cId}`).emit("message:deleted", { messageIds: verifiedIds, conversationId: cId });
+        }
+
+      } catch (error) {
+        console.error("Delete message error:", error);
+        socket.emit("error", { message: "Failed to delete messages" });
+      }
+    });
+
     // DISCONNECT
 
     socket.on("disconnect", (reason) => {
