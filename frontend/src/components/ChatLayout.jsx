@@ -27,7 +27,10 @@ import {
   Smile,
   X,
   Paperclip,
-  Menu
+  Menu,
+  Trash2,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { playNotificationSound } from '../utils/audio';
@@ -50,6 +53,7 @@ export default function ChatLayout() {
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const [isRoomSettingsOpen, setIsRoomSettingsOpen] = useState(false);
   const [invites, setInvites] = useState([]);
+  const [selectedMessageIds, setSelectedMessageIds] = useState([]);
   const typingTimer = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -179,6 +183,14 @@ export default function ChatLayout() {
         setActiveRoom(prev => ({ ...prev, ...updatedDM }));
       }
     };
+    
+    const handleMessageDeleted = ({ messageIds, roomId: msgRoomId, conversationId: msgConvId }) => {
+      const targetId = msgRoomId || msgConvId;
+      if (activeRoom?.id === targetId) {
+        setMessages((prev) => prev.filter(m => !messageIds.includes(m.id)));
+        setSelectedMessageIds((prev) => prev.filter(id => !messageIds.includes(id)));
+      }
+    };
 
     s.on('invite:received', handleInviteReceived);
     s.on('invite:accepted', handleInviteAccepted);
@@ -186,6 +198,7 @@ export default function ChatLayout() {
     s.on('room:removed', handleRoomRemoved);
     s.on('room:updated', handleRoomUpdated);
     s.on('dm:updated', handleDMUpdated);
+    s.on('message:deleted', handleMessageDeleted);
 
     return () => {
       s.off('invite:received', handleInviteReceived);
@@ -194,6 +207,7 @@ export default function ChatLayout() {
       s.off('room:removed', handleRoomRemoved);
       s.off('room:updated', handleRoomUpdated);
       s.off('dm:updated', handleDMUpdated);
+      s.off('message:deleted', handleMessageDeleted);
     };
   }, [socket, theme.notifications, theme.soundAlerts]);
 
@@ -247,6 +261,30 @@ export default function ChatLayout() {
   const handleLogout = () => {
     socket.disconnect();
     logout();
+  };
+
+  const toggleMessageSelection = (messageId) => {
+    setSelectedMessageIds(prev => 
+      prev.includes(messageId) 
+        ? prev.filter(id => id !== messageId)
+        : [...prev, messageId]
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedMessageIds.length === 0) return;
+    
+    // Only delete messages sent by the current user
+    const ownSelectedIds = messages
+      .filter(m => selectedMessageIds.includes(m.id) && m.senderId === user.id)
+      .map(m => m.id);
+      
+    if (ownSelectedIds.length > 0) {
+      socket.socket?.emit('message:delete', { messageIds: ownSelectedIds });
+      toast.success(`Deleting ${ownSelectedIds.length} message(s)...`);
+    } else {
+      toast.error("You can only delete your own messages");
+    }
   };
 
   const filteredMessages = searchQuery.trim() 
@@ -428,7 +466,30 @@ export default function ChatLayout() {
               </div>
               <div className="flex items-center gap-3">
                 <AnimatePresence mode="wait">
-                  {isSearching ? (
+                  {selectedMessageIds.length > 0 ? (
+                    <motion.div
+                      key="delete-actions"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-xs font-bold text-brand mr-2">{selectedMessageIds.length} selected</span>
+                      <button
+                        onClick={() => setSelectedMessageIds([])}
+                        className="p-3 text-text-muted hover:text-text-primary hover:bg-white/5 rounded-2xl transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleDeleteSelected}
+                        className="p-3 bg-danger/10 text-danger hover:bg-danger/20 rounded-2xl transition-all flex items-center gap-2"
+                      >
+                        <Trash2 size={20} />
+                        <span className="text-sm font-bold">Delete</span>
+                      </button>
+                    </motion.div>
+                  ) : isSearching ? (
                     <motion.div 
                       key="search-input"
                       initial={{ width: 0, opacity: 0 }}
@@ -494,6 +555,9 @@ export default function ChatLayout() {
                       isOwn={isOwn} 
                       showHeader={showHeader} 
                       searchQuery={searchQuery}
+                      isSelected={selectedMessageIds.includes(msg.id)}
+                      onToggleSelect={() => toggleMessageSelection(msg.id)}
+                      isSelectionMode={selectedMessageIds.length > 0}
                     />
                   );
                 })
@@ -646,7 +710,7 @@ function SidebarItem({ icon, label, badge }) {
   );
 }
 
-function MessageItem({ message, isOwn, showHeader, searchQuery }) {
+function MessageItem({ message, isOwn, showHeader, searchQuery, isSelected, onToggleSelect, isSelectionMode }) {
   const time = new Date(message.createdAt).toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit',
   });
@@ -665,8 +729,24 @@ function MessageItem({ message, isOwn, showHeader, searchQuery }) {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`group flex items-start gap-5 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+      layout
+      onClick={isSelectionMode ? onToggleSelect : undefined}
+      className={`group flex items-start gap-5 cursor-pointer relative ${isOwn ? "flex-row-reverse" : "flex-row"} ${isSelected ? "bg-brand/5 -mx-4 px-4 rounded-3xl" : ""}`}
     >
+      {/* Selection Checkbox (visible on hover or when in selection mode) */}
+      {isOwn && (
+        <div 
+          onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
+          className={`shrink-0 self-center transition-all ${isSelected || isSelectionMode ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+        >
+          {isSelected ? (
+            <CheckSquare size={20} className="text-brand" />
+          ) : (
+            <Square size={20} className="text-text-muted hover:text-brand" />
+          )}
+        </div>
+      )}
+
       {showHeader ? (
         <div className="mt-1 shrink-0">
           <motion.div 
@@ -689,11 +769,18 @@ function MessageItem({ message, isOwn, showHeader, searchQuery }) {
             <span className="text-[10px] text-text-muted font-black tracking-widest opacity-40">{time}</span>
           </div>
         )}
-        <div className={`relative px-5 py-3.5 rounded-3xl text-[15px] font-medium leading-relaxed whitespace-pre-wrap shadow-sm transition-all hover:shadow-md ${
+        <div 
+          onContextMenu={(e) => {
+            if (isOwn) {
+              e.preventDefault();
+              onToggleSelect();
+            }
+          }}
+          className={`relative px-5 py-3.5 rounded-3xl text-[15px] font-medium leading-relaxed whitespace-pre-wrap shadow-sm transition-all hover:shadow-md ${
           isOwn 
             ? "bg-brand text-white rounded-tr-none shadow-brand/10 hover:shadow-brand/20" 
             : "bg-bg-elevated border border-white/5 text-text-primary rounded-tl-none"
-        }`}>
+        } ${isSelected ? "ring-2 ring-white/50 ring-offset-2 ring-offset-brand" : ""}`}>
           {isOwn && (
              <div className="absolute top-0 right-0 w-full h-full bg-linear-to-br from-white/10 to-transparent rounded-3xl rounded-tr-none pointer-events-none" />
           )}

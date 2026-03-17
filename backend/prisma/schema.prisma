@@ -112,6 +112,8 @@ model Message {
   roomId         String?
   conversationId String?
 
+  isDeleted      Boolean         @default(false)
+  
   sender       User            @relation("SentMessages", fields: [senderId], references: [id])
   room         Room?           @relation(fields: [roomId], references: [id])
   conversation DMConversation? @relation(fields: [conversationId], references: [id])
