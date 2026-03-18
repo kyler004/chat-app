@@ -44,6 +44,10 @@ export const useSocket = (user) => {
     socketRef.current?.emit('room:join', { roomId });
   }, []);
 
+  const leaveRoom = useCallback((roomId) => {
+    socketRef.current?.emit('room:leave', { roomId });
+  }, []);
+
   const joinDM = useCallback((conversationId) => {
     socketRef.current?.emit('dm:join', { conversationId });
   }, []);
@@ -94,14 +98,14 @@ export const useSocket = (user) => {
 
   return useMemo(() => ({
     socket: socketInstance,
-    joinRoom, joinDM,
+    joinRoom, leaveRoom, joinDM,
     sendRoomMessage, sendDM,
     startTyping, stopTyping,
     startDMTyping, stopDMTyping,
     onMessage, onTyping,
     disconnect,
   }), [
-    joinRoom, joinDM, sendRoomMessage, sendDM, 
+    joinRoom, leaveRoom, joinDM, sendRoomMessage, sendDM, 
     startTyping, stopTyping, startDMTyping, stopDMTyping, 
     onMessage, onTyping, disconnect
   ]);

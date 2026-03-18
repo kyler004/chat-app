@@ -82,6 +82,15 @@ export default function ChatLayout() {
       api.get(`/api/messages/room/${activeRoom.id}`)
         .then(({ data }) => setMessages(data.messages || []));
     }
+
+    return () => {
+      // Clean up: Leave the room when moving to another one
+      if (activeRoom.isDM) {
+        socket.socket?.emit('dm:leave', { conversationId: activeRoom.id });
+      } else {
+        socket.leaveRoom(activeRoom.id);
+      }
+    };
   }, [activeRoom, socket]);
 
   // Listen for new messages
@@ -121,15 +130,25 @@ export default function ChatLayout() {
 
   // Listen for typing indicators
   useEffect(() => {
-    const cleanup = socket.onTyping(({ user: typingUser, isTyping }) => {
+    const cleanup = socket.onTyping(({ user: typingUser, isTyping, roomId, conversationId }) => {
+      // Filter typing indicators to the current active chat context
+      const incomingId = roomId || conversationId;
+      if (activeRoom?.id !== incomingId) return;
+
       setTypingUsers((prev) =>
         isTyping
           ? [...prev.filter((u) => u.id !== typingUser.id), typingUser]
           : prev.filter((u) => u.id !== typingUser.id)
       );
     });
+    
     return cleanup;
-  }, [socket]);
+  }, [socket, activeRoom]);
+
+  // Clear typing users when room changes
+  useEffect(() => {
+    setTypingUsers([]);
+  }, [activeRoom?.id]);
 
   // Listen for invites
   useEffect(() => {
