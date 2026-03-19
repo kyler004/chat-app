@@ -52,6 +52,7 @@ export default function ChatLayout() {
   const [isInvitesOpen, setIsInvitesOpen] = useState(false);
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const [isRoomSettingsOpen, setIsRoomSettingsOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState('forums'); // 'forums' | 'dms'
   const [invites, setInvites] = useState([]);
   const [selectedMessageIds, setSelectedMessageIds] = useState([]);
   const typingTimer = useRef(null);
@@ -388,19 +389,45 @@ export default function ChatLayout() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between px-3 mb-3">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">Channels</span>
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }} 
-                    whileTap={{ scale: 0.9 }} 
-                    onClick={() => setIsCreateRoomOpen(true)}
-                    className="text-text-muted hover:text-brand transition-colors"
+                <div className="flex p-1 bg-white/5 rounded-2xl mb-6 relative group border border-white/5">
+                  <motion.div 
+                    layoutId="sidebar-tab-bg"
+                    initial={false}
+                    animate={{ x: sidebarTab === 'forums' ? 0 : '100%' }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute inset-y-1 left-1 w-[calc(50%-4px)] bg-brand rounded-xl z-0 shadow-lg shadow-brand/20"
+                  />
+                  <button 
+                    onClick={() => setSidebarTab('forums')}
+                    className={`relative z-10 flex-1 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${sidebarTab === 'forums' ? 'text-white' : 'text-text-muted hover:text-text-primary'}`}
                   >
-                    <Plus size={16}/>
-                  </motion.button>
+                    Forums
+                  </button>
+                  <button 
+                    onClick={() => setSidebarTab('dms')}
+                    className={`relative z-10 flex-1 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${sidebarTab === 'dms' ? 'text-white' : 'text-text-muted hover:text-text-primary'}`}
+                  >
+                    Direct Messages
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between px-3 mb-3">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">
+                    {sidebarTab === 'forums' ? 'Channels' : 'Recent Chats'}
+                  </span>
+                  {sidebarTab === 'forums' && (
+                    <motion.button 
+                      whileHover={{ scale: 1.1 }} 
+                      whileTap={{ scale: 0.9 }} 
+                      onClick={() => setIsCreateRoomOpen(true)}
+                      className="text-text-muted hover:text-brand transition-colors"
+                    >
+                      <Plus size={16}/>
+                    </motion.button>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  {rooms.map((room) => (
+                  {rooms.filter(r => sidebarTab === 'forums' ? !r.isDM : r.isDM).map((room) => (
                     <button
                       key={room.id}
                       onClick={() => {
@@ -418,7 +445,13 @@ export default function ChatLayout() {
                         <motion.div layoutId="active-room" className="absolute inset-0 bg-brand shadow-lg shadow-brand/20 z-0" />
                       )}
                       <span className="relative z-10 flex items-center gap-3 w-full">
-                        <Hash size={18} className={activeRoom?.id === room.id ? "text-white/70" : "text-text-muted group-hover:text-text-secondary"} />
+                        {room.isDM ? (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-lg bg-white/10 group-hover:bg-brand/20 transition-all">
+                             <UserIcon size={12} className={activeRoom?.id === room.id ? "text-white/70" : "text-text-muted group-hover:text-brand"} />
+                          </div>
+                        ) : (
+                          <Hash size={18} className={activeRoom?.id === room.id ? "text-white/70" : "text-text-muted group-hover:text-text-secondary"} />
+                        )}
                         <span className="flex-1 text-left truncate">{room.name}</span>
                       </span>
                     </button>
