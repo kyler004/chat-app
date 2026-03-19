@@ -122,6 +122,12 @@ export const registerSocketHandlers = (io) => {
       }
     });
 
+    // Client leaves a DM conversation
+    socket.on("dm:leave", ({ conversationId }) => {
+      socket.leave(`dm:${conversationId}`);
+      console.log(`📡 ${socket.user.username} left DM ${conversationId}`);
+    });
+
     // Client sends a DM
     socket.on("message:send_dm", async ({ conversationId, content }) => {
       try {
@@ -147,6 +153,7 @@ export const registerSocketHandlers = (io) => {
           conversationId,
         });
       } catch (error) {
+        console.error("Send DM error:", error);
         socket.emit("error", { message: "Failed to send DM" });
       }
     });
@@ -157,6 +164,7 @@ export const registerSocketHandlers = (io) => {
       socket.to(roomId).emit("typing:update", {
         user: socket.user,
         isTyping: true,
+        roomId, // <--- Add this
       });
     });
 
@@ -164,6 +172,7 @@ export const registerSocketHandlers = (io) => {
       socket.to(roomId).emit("typing:update", {
         user: socket.user,
         isTyping: false,
+        roomId, // <--- Add this
       });
     });
 
@@ -171,6 +180,7 @@ export const registerSocketHandlers = (io) => {
       socket.to(`dm:${conversationId}`).emit("typing:update", {
         user: socket.user,
         isTyping: true,
+        conversationId, // <--- Add this
       });
     });
 
@@ -178,6 +188,7 @@ export const registerSocketHandlers = (io) => {
       socket.to(`dm:${conversationId}`).emit("typing:update", {
         user: socket.user,
         isTyping: false,
+        conversationId, // <--- Add this
       });
     });
 

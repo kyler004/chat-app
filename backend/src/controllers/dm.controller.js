@@ -6,7 +6,7 @@ export const updateDM = async (req, res) => {
 
   try {
     // Verify user is a participant
-    const participant = await prisma.dmParticipant.findFirst({
+    const participant = await prisma.dMParticipant.findFirst({
       where: {
         conversationId: id,
         userId: req.user.id
@@ -17,7 +17,7 @@ export const updateDM = async (req, res) => {
       return res.status(403).json({ error: 'You are not a participant in this conversation' });
     }
 
-    const updatedDM = await prisma.dmConversation.update({
+    const updatedDM = await prisma.dMConversation.update({
       where: { id },
       data: { description },
       include: {

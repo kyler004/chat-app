@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 
 let socketInstance = null; // module-level singleton
 
 export const useSocket = (user) => {
+  const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -21,12 +22,16 @@ export const useSocket = (user) => {
           reconnectionDelay: 1000,
         }
       );
+    } else if (socketInstance.connected && !isConnected) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setIsConnected(true);
     }
 
     socketRef.current = socketInstance;
 
     socketInstance.on('connect', () => {
       console.log('🟢 Socket connected:', socketInstance.id);
+      setIsConnected(true);
     });
 
     socketInstance.on('connect_error', (err) => {
@@ -42,6 +47,10 @@ export const useSocket = (user) => {
   // Join a room or DM
   const joinRoom = useCallback((roomId) => {
     socketRef.current?.emit('room:join', { roomId });
+  }, []);
+
+  const leaveRoom = useCallback((roomId) => {
+    socketRef.current?.emit('room:leave', { roomId });
   }, []);
 
   const joinDM = useCallback((conversationId) => {
@@ -93,15 +102,15 @@ export const useSocket = (user) => {
   }, []);
 
   return useMemo(() => ({
-    socket: socketInstance,
-    joinRoom, joinDM,
+    socket: isConnected ? socketInstance : socketInstance,
+    joinRoom, leaveRoom, joinDM,
     sendRoomMessage, sendDM,
     startTyping, stopTyping,
     startDMTyping, stopDMTyping,
     onMessage, onTyping,
     disconnect,
   }), [
-    joinRoom, joinDM, sendRoomMessage, sendDM, 
+    isConnected, joinRoom, leaveRoom, joinDM, sendRoomMessage, sendDM, 
     startTyping, stopTyping, startDMTyping, stopDMTyping, 
     onMessage, onTyping, disconnect
   ]);
