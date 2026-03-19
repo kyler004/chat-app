@@ -724,6 +724,7 @@ export default function ChatLayout() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => setIsDiscoverOpen(true)}
               className="btn-primary mt-12 rounded-3xl! px-10 py-4 text-base"
             >
               Launch a Conversation
