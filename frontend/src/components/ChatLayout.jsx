@@ -45,6 +45,7 @@ export default function ChatLayout() {
   const [typingUsers, setTypingUsers] = useState([]);
   const [input, setInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -364,6 +365,8 @@ export default function ChatLayout() {
                 <input 
                   type="text" 
                   placeholder="Quick search..." 
+                  value={sidebarSearchQuery}
+                  onChange={(e) => setSidebarSearchQuery(e.target.value)}
                   className="w-full bg-bg-base/40 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm focus:bg-bg-base/60 transition-all outline-none focus:ring-4 focus:ring-brand/10"
                 />
               </div>
@@ -451,7 +454,14 @@ export default function ChatLayout() {
             )}
             
             <div className="space-y-1">
-              {rooms.filter(r => sidebarTab === 'forums' ? !r.isDM : r.isDM).map((room) => (
+              {rooms
+                .filter(r => {
+                  if (sidebarSearchQuery.trim()) {
+                    return r.name.toLowerCase().includes(sidebarSearchQuery.toLowerCase());
+                  }
+                  return sidebarTab === 'forums' ? !r.isDM : r.isDM;
+                })
+                .map((room) => (
                 <button
                   key={room.id}
                   onClick={() => {
