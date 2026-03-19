@@ -295,7 +295,7 @@ export default function ChatLayout() {
     
     // Only delete messages sent by the current user
     const ownSelectedIds = messages
-      .filter(m => selectedMessageIds.includes(m.id) && m.senderId === user.id)
+      .filter(m => selectedMessageIds.includes(m.id) && m.sender?.id === user.id)
       .map(m => m.id);
       
     if (ownSelectedIds.length > 0) {
