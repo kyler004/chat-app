@@ -320,34 +320,45 @@ export default function ChatLayout() {
           <div className="mesh-ball right-0 bottom-0 bg-indigo-500/30" />
         </div>
       )}
+           {/* ── Sidebar ───────────────────────────────── */}
+      <motion.aside 
+        initial={false}
+        animate={{ width: sidebarOpen ? 300 : 80 }}
+        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+        className="relative flex h-full flex-col border-r border-white/5 bg-bg-surface/40 backdrop-blur-3xl z-30 overflow-hidden shrink-0"
+      >
+        {/* Sidebar Glow */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+          <div className="absolute -top-[20%] -left-[20%] w-full h-full bg-brand/5 blur-[100px] rounded-full" />
+        </div>
 
-      {/* ── Sidebar ───────────────────────────────── */}
-      <AnimatePresence mode="popLayout" initial={false}>
-        {sidebarOpen && (
-          <motion.aside 
-            initial={{ width: 0, opacity: 0, x: -20 }}
-            animate={{ width: 300, opacity: 1, x: 0 }}
-            exit={{ width: 0, opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-            className="relative flex h-full flex-col border-r border-white/5 bg-bg-surface/40 backdrop-blur-3xl z-30 overflow-hidden"
-          >
-            {/* Sidebar Glow */}
-            <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-               <div className="absolute -top-[20%] -left-[20%] w-full h-full bg-brand/5 blur-[100px] rounded-full" />
+        {/* Header */}
+        <div className={`flex h-20 items-center justify-between px-7 transition-all ${!sidebarOpen ? 'px-0 justify-center' : ''}`}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand shadow-inner">
+              <Sparkles size={22} className="animate-pulse" />
             </div>
+            {sidebarOpen && (
+              <motion.span 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-2xl font-black tracking-tighter text-text-primary"
+              >
+                Relay
+              </motion.span>
+            )}
+          </div>
+        </div>
 
-            {/* Header */}
-            <div className="flex h-20 items-center justify-between px-7">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand shadow-inner">
-                  <Sparkles size={22} className="animate-pulse" />
-                </div>
-                <span className="text-2xl font-black tracking-tighter text-text-primary">Relay</span>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="px-5 py-4">
+        {/* Search */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-5 py-4 overflow-hidden"
+            >
               <div className="relative group">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand transition-all" />
                 <input 
@@ -356,138 +367,153 @@ export default function ChatLayout() {
                   className="w-full bg-bg-base/40 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm focus:bg-bg-base/60 transition-all outline-none focus:ring-4 focus:ring-brand/10"
                 />
               </div>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* Navigation Sections */}
-            <div className="flex-1 space-y-8 px-4 py-4 overflow-y-auto custom-scrollbar">
-              <div>
-                <div className="flex items-center justify-between px-3 mb-3">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">Explore</span>
-                </div>
-                <div className="space-y-1">
-                  <SidebarItem icon={<MessageSquare size={18}/>} label="All Messages" />
-                  <button 
-                    onClick={() => setIsDiscoverOpen(true)}
-                    className="flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all"
-                  >
-                    <span className="text-text-muted group-hover:text-brand transition-all"><Users size={18}/></span>
-                    <span className="flex-1 text-left">Discover Users</span>
-                  </button>
-                  <button 
-                    onClick={() => setIsInvitesOpen(true)}
-                    className="flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all relative"
-                  >
-                    <span className="text-text-muted group-hover:text-brand transition-all"><Bell size={18}/></span>
-                    <span className="flex-1 text-left">Notifications</span>
-                    {invites.filter(i => i.receiverId === user.id).length > 0 && (
-                      <span className="px-2.5 py-1 rounded-lg bg-brand shadow-lg shadow-brand/20 text-white text-[10px] font-black">
-                        {invites.filter(i => i.receiverId === user.id).length}
-                      </span>
-                    )}
-                  </button>
-                </div>
+        {/* Navigation Sections */}
+        <div className={`flex-1 space-y-8 py-4 overflow-y-auto custom-scrollbar transition-all ${sidebarOpen ? 'px-4' : 'px-2'}`}>
+          <div>
+            {sidebarOpen && (
+              <div className="flex items-center justify-between px-3 mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">Explore</span>
               </div>
-
-              <div>
-                <div className="flex p-1 bg-white/5 rounded-2xl mb-6 relative group border border-white/5">
-                  <motion.div 
-                    layoutId="sidebar-tab-bg"
-                    initial={false}
-                    animate={{ x: sidebarTab === 'forums' ? 0 : '100%' }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="absolute inset-y-1 left-1 w-[calc(50%-4px)] bg-brand rounded-xl z-0 shadow-lg shadow-brand/20"
-                  />
-                  <button 
-                    onClick={() => setSidebarTab('forums')}
-                    className={`relative z-10 flex-1 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${sidebarTab === 'forums' ? 'text-white' : 'text-text-muted hover:text-text-primary'}`}
-                  >
-                    Forums
-                  </button>
-                  <button 
-                    onClick={() => setSidebarTab('dms')}
-                    className={`relative z-10 flex-1 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${sidebarTab === 'dms' ? 'text-white' : 'text-text-muted hover:text-text-primary'}`}
-                  >
-                    Direct Messages
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between px-3 mb-3">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">
-                    {sidebarTab === 'forums' ? 'Channels' : 'Recent Chats'}
-                  </span>
-                  {sidebarTab === 'forums' && (
-                    <motion.button 
-                      whileHover={{ scale: 1.1 }} 
-                      whileTap={{ scale: 0.9 }} 
-                      onClick={() => setIsCreateRoomOpen(true)}
-                      className="text-text-muted hover:text-brand transition-colors"
-                    >
-                      <Plus size={16}/>
-                    </motion.button>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  {rooms.filter(r => sidebarTab === 'forums' ? !r.isDM : r.isDM).map((room) => (
-                    <button
-                      key={room.id}
-                      onClick={() => {
-                        setActiveRoom(room);
-                        setSearchQuery('');
-                        setIsSearching(false);
-                      }}
-                      className={`flex w-full items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all group relative overflow-hidden ${
-                        activeRoom?.id === room.id 
-                          ? "text-white" 
-                          : "text-text-secondary hover:bg-white/5 hover:text-text-primary"
-                      }`}
-                    >
-                      {activeRoom?.id === room.id && (
-                        <motion.div layoutId="active-room" className="absolute inset-0 bg-brand shadow-lg shadow-brand/20 z-0" />
-                      )}
-                      <span className="relative z-10 flex items-center gap-3 w-full">
-                        {room.isDM ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-lg bg-white/10 group-hover:bg-brand/20 transition-all">
-                             <UserIcon size={12} className={activeRoom?.id === room.id ? "text-white/70" : "text-text-muted group-hover:text-brand"} />
-                          </div>
-                        ) : (
-                          <Hash size={18} className={activeRoom?.id === room.id ? "text-white/70" : "text-text-muted group-hover:text-text-secondary"} />
-                        )}
-                        <span className="flex-1 text-left truncate">{room.name}</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* User Footer */}
-            <div className="p-5 border-t border-white/5 bg-bg-surface/20">
-              <div 
-                onClick={() => setIsSettingsOpen(true)}
-                className="flex items-center gap-4 rounded-3xl bg-white/5 p-4 border border-white/5 hover:bg-white/10 transition-all group cursor-pointer"
+            )}
+            <div className="space-y-1">
+              <SidebarItem icon={<MessageSquare size={18}/>} label="All Messages" collapsed={!sidebarOpen} />
+              <button 
+                onClick={() => setIsDiscoverOpen(true)}
+                className={`flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all ${!sidebarOpen ? 'justify-center px-0' : ''}`}
+                title={!sidebarOpen ? "Discover Users" : ""}
               >
-                <div className="relative">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white font-black text-lg shadow-xl shadow-brand/20">
-                    {user?.avatar ? <img src={user.avatar} alt="" className="w-full h-full object-cover rounded-2xl" /> : user?.username?.[0]?.toUpperCase()}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-4 border-bg-surface bg-success shadow-sm animate-pulse" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black truncate text-text-primary uppercase tracking-tight">{user?.username}</p>
-                  <p className="text-[10px] text-success font-black uppercase tracking-widest mt-0.5">Online Now</p>
-                </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-                  className="p-2.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-all"
-                  title="Logout"
-                >
-                  <LogOut size={20} />
-                </button>
-              </div>
+                <span className="text-text-muted group-hover:text-brand transition-all shrink-0"><Users size={18}/></span>
+                {sidebarOpen && <span className="flex-1 text-left">Discover Users</span>}
+              </button>
+              <button 
+                onClick={() => setIsInvitesOpen(true)}
+                className={`flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all relative ${!sidebarOpen ? 'justify-center px-0' : ''}`}
+                title={!sidebarOpen ? "Notifications" : ""}
+              >
+                <span className="text-text-muted group-hover:text-brand transition-all shrink-0"><Bell size={18}/></span>
+                {sidebarOpen && <span className="flex-1 text-left">Notifications</span>}
+                {invites.filter(i => i.receiverId === user.id).length > 0 && (
+                  <span className={`px-2.5 py-1 rounded-lg bg-brand shadow-lg shadow-brand/20 text-white text-[10px] font-black ${!sidebarOpen ? 'absolute top-1 right-1 px-1.5 py-0.5 min-w-[18px] text-[8px]' : ''}`}>
+                    {invites.filter(i => i.receiverId === user.id).length}
+                  </span>
+                )}
+              </button>
             </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
+          </div>
+
+          <div>
+            <div className={`flex p-1 bg-white/5 rounded-2xl mb-6 relative group border border-white/5 transition-all ${!sidebarOpen ? 'flex-col gap-1 items-center bg-transparent border-none' : ''}`}>
+              {sidebarOpen && (
+                <motion.div 
+                  layoutId="sidebar-tab-bg"
+                  initial={false}
+                  animate={{ x: sidebarTab === 'forums' ? 0 : '100%' }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  className="absolute inset-y-1 left-1 w-[calc(50%-4px)] bg-brand rounded-xl z-0 shadow-lg shadow-brand/20"
+                />
+              )}
+              <button 
+                onClick={() => setSidebarTab('forums')}
+                className={`relative z-10 flex-1 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${!sidebarOpen ? 'w-10 h-10 rounded-xl flex items-center justify-center p-0' : ''} ${sidebarTab === 'forums' ? (sidebarOpen ? 'text-white' : 'bg-brand text-white shadow-lg shadow-brand/20') : 'text-text-muted hover:text-text-primary'}`}
+                title={!sidebarOpen ? "Forums" : ""}
+              >
+                {sidebarOpen ? 'Forums' : <Hash size={18}/>}
+              </button>
+              <button 
+                onClick={() => setSidebarTab('dms')}
+                className={`relative z-10 flex-1 py-2 text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${!sidebarOpen ? 'w-10 h-10 rounded-xl flex items-center justify-center p-0' : ''} ${sidebarTab === 'dms' ? (sidebarOpen ? 'text-white' : 'bg-brand text-white shadow-lg shadow-brand/20') : 'text-text-muted hover:text-text-primary'}`}
+                title={!sidebarOpen ? "Direct Messages" : ""}
+              >
+                {sidebarOpen ? 'Direct Messages' : <MessageSquare size={18}/>}
+              </button>
+            </div>
+
+            {sidebarOpen && (
+              <div className="flex items-center justify-between px-3 mb-3">
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted">
+                  {sidebarTab === 'forums' ? 'Channels' : 'Recent Chats'}
+                </span>
+                {sidebarTab === 'forums' && (
+                  <motion.button 
+                    whileHover={{ scale: 1.1 }} 
+                    whileTap={{ scale: 0.9 }} 
+                    onClick={() => setIsCreateRoomOpen(true)}
+                    className="text-text-muted hover:text-brand transition-colors"
+                  >
+                    <Plus size={16}/>
+                  </motion.button>
+                )}
+              </div>
+            )}
+            
+            <div className="space-y-1">
+              {rooms.filter(r => sidebarTab === 'forums' ? !r.isDM : r.isDM).map((room) => (
+                <button
+                  key={room.id}
+                  onClick={() => {
+                    setActiveRoom(room);
+                    setSearchQuery('');
+                    setIsSearching(false);
+                  }}
+                  className={`flex w-full items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all group relative overflow-hidden ${!sidebarOpen ? 'justify-center px-0' : ''} ${
+                    activeRoom?.id === room.id 
+                      ? "text-white" 
+                      : "text-text-secondary hover:bg-white/5 hover:text-text-primary"
+                  }`}
+                  title={!sidebarOpen ? room.name : ""}
+                >
+                  {activeRoom?.id === room.id && (
+                    <motion.div layoutId="active-room" className="absolute inset-0 bg-brand shadow-lg shadow-brand/20 z-0" />
+                  )}
+                  <span className={`relative z-10 flex items-center gap-3 w-full ${!sidebarOpen ? 'justify-center' : ''}`}>
+                    {room.isDM ? (
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg bg-white/10 group-hover:bg-brand/20 transition-all">
+                          <UserIcon size={12} className={activeRoom?.id === room.id ? "text-white/70" : "text-text-muted group-hover:text-brand"} />
+                      </div>
+                    ) : (
+                      <Hash size={18} className={`shrink-0 ${activeRoom?.id === room.id ? "text-white/70" : "text-text-muted group-hover:text-text-secondary"}`} />
+                    )}
+                    {sidebarOpen && <span className="flex-1 text-left truncate">{room.name}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* User Footer */}
+        <div className={`p-5 border-t border-white/5 bg-bg-surface/20 transition-all ${!sidebarOpen ? 'p-2' : ''}`}>
+          <div 
+            onClick={() => setIsSettingsOpen(true)}
+            className={`flex items-center gap-4 rounded-3xl bg-white/5 p-4 border border-white/5 hover:bg-white/10 transition-all group cursor-pointer ${!sidebarOpen ? 'p-2 flex-col rounded-2xl' : ''}`}
+            title={!sidebarOpen ? "Settings" : ""}
+          >
+            <div className="relative">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-white font-black text-lg shadow-xl shadow-brand/20">
+                {user?.avatar ? <img src={user.avatar} alt="" className="w-full h-full object-cover rounded-2xl" /> : user?.username?.[0]?.toUpperCase()}
+              </div>
+              <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-4 border-bg-surface bg-success shadow-sm animate-pulse" />
+            </div>
+            {sidebarOpen && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black truncate text-text-primary uppercase tracking-tight">{user?.username}</p>
+                <p className="text-[10px] text-success font-black uppercase tracking-widest mt-0.5">Online Now</p>
+              </div>
+            )}
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleLogout(); }}
+              className={`p-2.5 text-text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-all ${!sidebarOpen ? 'mt-1' : ''}`}
+              title="Logout"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
+        </div>
+      </motion.aside>
 
       {/* ── Main content ─────────────────────────── */}
       <main className="relative flex flex-1 flex-col overflow-hidden z-20">
@@ -752,12 +778,15 @@ export default function ChatLayout() {
   );
 }
 
-function SidebarItem({ icon, label, badge }) {
+function SidebarItem({ icon, label, badge, collapsed }) {
   return (
-    <button className="flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all">
-      <span className="text-text-muted group-hover:text-brand transition-all">{icon}</span>
-      <span className="flex-1 text-left">{label}</span>
-      {badge && <span className="px-2.5 py-1 rounded-lg bg-brand shadow-lg shadow-brand/20 text-white text-[10px] font-black">{badge}</span>}
+    <button 
+      className={`flex w-full items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold text-text-secondary hover:bg-white/5 hover:text-text-primary group transition-all ${collapsed ? 'justify-center px-0' : ''}`}
+      title={collapsed ? label : ""}
+    >
+      <span className="text-text-muted group-hover:text-brand transition-all shrink-0">{icon}</span>
+      {!collapsed && <span className="flex-1 text-left">{label}</span>}
+      {!collapsed && badge && <span className="px-2.5 py-1 rounded-lg bg-brand shadow-lg shadow-brand/20 text-white text-[10px] font-black">{badge}</span>}
     </button>
   );
 }
