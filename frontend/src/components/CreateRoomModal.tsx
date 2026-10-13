@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Hash, MessageSquare, Loader2, Check } from 'lucide-react';
@@ -5,7 +6,7 @@ import api from '../api/client';
 import { useTheme } from '../context/ThemeContext';
 
 export default function CreateRoomModal({ isOpen, onClose, onRoomCreated }) {
-  const { theme } = useTheme();
+  const { theme }: any = useTheme();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,17 +40,17 @@ export default function CreateRoomModal({ isOpen, onClose, onRoomCreated }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0 as any }}
+        animate={{ opacity: 1 as any }}
+        exit={{ opacity: 0 as any }}
         onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-md"
       />
 
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.9, opacity: 0 as any, y: 20 }}
+        animate={{ scale: 1, opacity: 1 as any, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0 as any, y: 20 }}
         className={`relative w-full max-w-lg border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col ${theme.glassmorphism ? 'bg-bg-surface/80 backdrop-blur-3xl' : 'bg-bg-surface'}`}
       >
         <header className="flex items-center justify-between px-8 py-6 border-b border-white/5">

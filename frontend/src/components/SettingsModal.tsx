@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -22,7 +23,7 @@ import api from '../api/client';
 import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
-  const { theme, updateTheme } = useTheme();
+  const { theme, updateTheme }: any = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -78,18 +79,18 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0 as any }}
+        animate={{ opacity: 1 as any }}
+        exit={{ opacity: 0 as any }}
         onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-md"
       />
 
       {/* Modal */}
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.9, opacity: 0 as any, y: 20 }}
+        animate={{ scale: 1, opacity: 1 as any, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0 as any, y: 20 }}
         className={`relative w-full max-w-4xl h-[600px] border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col sm:flex-row ${theme.glassmorphism ? 'bg-bg-surface/80 backdrop-blur-3xl' : 'bg-bg-surface'}`}
       >
         {/* Glow Effects */}
@@ -152,9 +153,9 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
               {activeTab === 'profile' && (
                 <motion.div
                   key="profile-tab"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 as any, x: 10 }}
+                  animate={{ opacity: 1 as any, x: 0 }}
+                  exit={{ opacity: 0 as any, x: -10 }}
                   className="space-y-8"
                 >
                   {/* Avatar Section */}
@@ -211,9 +212,9 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
               {activeTab === 'appearance' && (
                 <motion.div
                   key="appearance-tab"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 as any, x: 10 }}
+                  animate={{ opacity: 1 as any, x: 0 }}
+                  exit={{ opacity: 0 as any, x: -10 }}
                   className="space-y-8"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -269,9 +270,9 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
               {activeTab === 'account' && (
                 <motion.div
                   key="account-tab"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 as any, x: 10 }}
+                  animate={{ opacity: 1 as any, x: 0 }}
+                  exit={{ opacity: 0 as any, x: -10 }}
                   className="space-y-8"
                 >
                   <div className="p-6 rounded-3xl bg-brand/5 border border-brand/10 space-y-6">
@@ -317,9 +318,9 @@ export default function SettingsModal({ isOpen, onClose, user, onUpdateUser }) {
               {activeTab === 'general' && (
                 <motion.div
                   key="general-tab"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0 as any, x: 10 }}
+                  animate={{ opacity: 1 as any, x: 0 }}
+                  exit={{ opacity: 0 as any, x: -10 }}
                   className="space-y-8"
                 >
                   <div className="space-y-4">

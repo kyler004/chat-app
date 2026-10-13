@@ -1,6 +1,6 @@
 import prisma from '../lib/prisma.js';
 
-export const updateDM = async (req, res) => {
+export const updateDM = async (req: any, res: any) => {
   const { id } = req.params;
   const { description } = req.body;
 
@@ -30,7 +30,7 @@ export const updateDM = async (req, res) => {
     });
 
     res.json({ conversation: updatedDM });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating DM:', error);
     res.status(500).json({ error: 'Failed to update DM description' });
   }
