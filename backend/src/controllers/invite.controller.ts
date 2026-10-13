@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 
-export const getInvites = async (req, res) => {
+export const getInvites = async (req: any, res: any) => {
   try {
     const invites = await prisma.conversationInvite.findMany({
       where: {
@@ -22,13 +22,13 @@ export const getInvites = async (req, res) => {
     });
 
     res.json({ invites });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching invites:', error);
     res.status(500).json({ error: 'Failed to fetch invites' });
   }
 };
 
-export const sendInvite = async (req, res) => {
+export const sendInvite = async (req: any, res: any) => {
   const { receiverId } = req.body;
   const senderId = req.user.id;
 
@@ -86,13 +86,13 @@ export const sendInvite = async (req, res) => {
     });
 
     res.status(201).json({ invite });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending invite:', error);
     res.status(500).json({ error: 'Failed to send invite' });
   }
 };
 
-export const acceptInvite = async (req, res) => {
+export const acceptInvite = async (req: any, res: any) => {
   const { id } = req.params;
   const userId = req.user.id;
 
@@ -174,13 +174,13 @@ export const acceptInvite = async (req, res) => {
     });
 
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error accepting invite:', error);
     res.status(500).json({ error: 'Failed to accept invite' });
   }
 };
 
-export const rejectInvite = async (req, res) => {
+export const rejectInvite = async (req: any, res: any) => {
   const { id } = req.params;
   const userId = req.user.id;
 
@@ -207,7 +207,7 @@ export const rejectInvite = async (req, res) => {
     });
 
     res.json({ invite: updatedInvite });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error rejecting invite:', error);
     res.status(500).json({ error: 'Failed to reject invite' });
   }

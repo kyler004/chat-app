@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (req: any, res: any) => {
   const { username, avatar } = req.body;
   const userId = req.user.id;
 
@@ -35,17 +35,17 @@ export const updateProfile = async (req, res) => {
     });
 
     res.json({ user: updatedUser });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update profile error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
   }
 };
 
-export const getMe = async (req, res) => {
+export const getMe = async (req: any, res: any) => {
   res.json({ user: req.user });
 };
 
-export const searchUsers = async (req, res) => {
+export const searchUsers = async (req: any, res: any) => {
   const { q } = req.query;
   const userId = req.user.id;
 
@@ -71,13 +71,13 @@ export const searchUsers = async (req, res) => {
     });
 
     res.json({ users });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Search users error:', error);
     res.status(500).json({ error: 'Failed to search users' });
   }
 };
 
-export const getMyDMs = async (req, res) => {
+export const getMyDMs = async (req: any, res: any) => {
   const userId = req.user.id;
   try {
     const dms = await prisma.dMConversation.findMany({
@@ -107,7 +107,7 @@ export const getMyDMs = async (req, res) => {
     });
 
     res.json({ dms: formattedDMs });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Fetch DMs error:', error);
     res.status(500).json({ error: 'Failed to fetch DMs' });
   }

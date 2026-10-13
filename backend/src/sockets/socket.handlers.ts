@@ -1,8 +1,8 @@
 import { prisma } from "../lib/prisma.js";
 import { invalidateCache, CACHE_KEYS } from "../services/redis.service.js";
 
-export const registerSocketHandlers = (io) => {
-  io.on("connection", (socket) => {
+export const registerSocketHandlers = (io: any) => {
+  io.on("connection", (socket: any) => {
     console.log(`🟢 User connected: ${socket.user.username} [${socket.id}]`);
 
     // Add user to a personal room
@@ -11,7 +11,7 @@ export const registerSocketHandlers = (io) => {
     // ROOM EVENTS
 
     //Client joins a chat room
-    socket.on("room:join", async ({ roomId }) => {
+    socket.on("room:join", async ({ roomId }: any) => {
       try {
         // 1. Double check membership (Rooms are now private)
         const membership = await prisma.roomMember.findUnique({
@@ -37,14 +37,14 @@ export const registerSocketHandlers = (io) => {
           user: socket.user,
           roomId,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Join room error:", error);
         socket.emit("error", { message: "Failed to join room" });
       }
     });
 
     // Client leaves a room
-    socket.on("room:leave", ({ roomId }) => {
+    socket.on("room:leave", ({ roomId }: any) => {
       socket.leave(roomId);
       socket.to(roomId).emit("room:user_left", {
         user: socket.user,
@@ -53,7 +53,7 @@ export const registerSocketHandlers = (io) => {
     });
 
     //Client sends a message to a room
-    socket.on("message:send_room", async ({ roomId, content }) => {
+    socket.on("message:send_room", async ({ roomId, content }: any) => {
       try {
         if (!content?.trim()) return; 
 
@@ -89,7 +89,7 @@ export const registerSocketHandlers = (io) => {
           message,
           roomId,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Send message error:", error);
         socket.emit("error", { message: "Failed to send message" });
       }
@@ -98,7 +98,7 @@ export const registerSocketHandlers = (io) => {
     // DIRECT MESSAGE EVENTS
 
     //Client joins a DM conversation
-    socket.on("dm:join", async ({ conversationId }) => {
+    socket.on("dm:join", async ({ conversationId }: any) => {
       try {
         //verify this user is part of this conversation
         const participant = await prisma.dMParticipant.findUnique({
@@ -117,19 +117,19 @@ export const registerSocketHandlers = (io) => {
 
         socket.join(`dm:${conversationId}`);
         console.log(`📡 ${socket.user.username} joined DM ${conversationId}`);
-      } catch (error) {
+      } catch (error: any) {
         socket.emit("error", { message: "Failed to join DM" });
       }
     });
 
     // Client leaves a DM conversation
-    socket.on("dm:leave", ({ conversationId }) => {
+    socket.on("dm:leave", ({ conversationId }: any) => {
       socket.leave(`dm:${conversationId}`);
       console.log(`📡 ${socket.user.username} left DM ${conversationId}`);
     });
 
     // Client sends a DM
-    socket.on("message:send_dm", async ({ conversationId, content }) => {
+    socket.on("message:send_dm", async ({ conversationId, content }: any) => {
       try {
         if (!content?.trim()) return;
 
@@ -152,7 +152,7 @@ export const registerSocketHandlers = (io) => {
           message,
           conversationId,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Send DM error:", error);
         socket.emit("error", { message: "Failed to send DM" });
       }
@@ -160,7 +160,7 @@ export const registerSocketHandlers = (io) => {
 
     //TYPING INDICATORS
 
-    socket.on("typing:start", ({ roomId }) => {
+    socket.on("typing:start", ({ roomId }: any) => {
       socket.to(roomId).emit("typing:update", {
         user: socket.user,
         isTyping: true,
@@ -168,7 +168,7 @@ export const registerSocketHandlers = (io) => {
       });
     });
 
-    socket.on("typing:stop", ({ roomId }) => {
+    socket.on("typing:stop", ({ roomId }: any) => {
       socket.to(roomId).emit("typing:update", {
         user: socket.user,
         isTyping: false,
@@ -176,7 +176,7 @@ export const registerSocketHandlers = (io) => {
       });
     });
 
-    socket.on("dm:typing:start", ({ conversationId }) => {
+    socket.on("dm:typing:start", ({ conversationId }: any) => {
       socket.to(`dm:${conversationId}`).emit("typing:update", {
         user: socket.user,
         isTyping: true,
@@ -184,7 +184,7 @@ export const registerSocketHandlers = (io) => {
       });
     });
 
-    socket.on("dm:typing:stop", ({ conversationId }) => {
+    socket.on("dm:typing:stop", ({ conversationId }: any) => {
       socket.to(`dm:${conversationId}`).emit("typing:update", {
         user: socket.user,
         isTyping: false,
@@ -194,12 +194,12 @@ export const registerSocketHandlers = (io) => {
 
     // INVITE EVENTS
 
-    socket.on("invite:send", ({ receiverId, invite }) => {
+    socket.on("invite:send", ({ receiverId, invite }: any) => {
       // Send to the receiver's personal room
       io.to(`user:${receiverId}`).emit("invite:received", { invite });
     });
 
-    socket.on("invite:accept", ({ senderId, receiverId, conversation }) => {
+    socket.on("invite:accept", ({ senderId, receiverId, conversation }: any) => {
       // Notify both the sender and the receiver about the new conversation
       io.to(`user:${senderId}`).emit("invite:accepted", { conversation });
       io.to(`user:${receiverId}`).emit("invite:accepted", { conversation });
@@ -207,7 +207,7 @@ export const registerSocketHandlers = (io) => {
 
     // MEMBERSHIP EVENTS (For real-time Room list updates)
 
-    socket.on("room:member_added", ({ roomId, userId, member, room }) => {
+    socket.on("room:member_added", ({ roomId, userId, member, room }: any) => {
       // Notify the target user so they can add the room to their sidebar
       io.to(`user:${userId}`).emit("room:added", { room });
       
@@ -218,7 +218,7 @@ export const registerSocketHandlers = (io) => {
       });
     });
 
-    socket.on("room:member_removed", ({ roomId, userId }) => {
+    socket.on("room:member_removed", ({ roomId, userId }: any) => {
       // Notify the target user so they can remove the room from their sidebar
       io.to(`user:${userId}`).emit("room:removed", { roomId });
 
@@ -230,17 +230,17 @@ export const registerSocketHandlers = (io) => {
     });
 
     // METADATA UPDATES
-    socket.on("room:update", ({ roomId, room }) => {
+    socket.on("room:update", ({ roomId, room }: any) => {
       // Broadcast to everyone in the room
       io.to(roomId).emit("room:updated", { room });
     });
 
-    socket.on("dm:update", ({ conversationId, conversation }) => {
+    socket.on("dm:update", ({ conversationId, conversation }: any) => {
       // Broadcast to participants in the DM conversation
       io.to(`dm:${conversationId}`).emit("dm:updated", { conversation });
     });
 
-    socket.on("message:delete", async ({ messageIds }) => {
+    socket.on("message:delete", async ({ messageIds }: any) => {
       try {
         if (!Array.isArray(messageIds) || messageIds.length === 0) return;
 
@@ -255,7 +255,7 @@ export const registerSocketHandlers = (io) => {
 
         if (messagesToDelete.length === 0) return;
 
-        const verifiedIds = messagesToDelete.map((m) => m.id);
+        const verifiedIds = messagesToDelete.map((m: any) => m.id);
 
         // Soft delete in database
         await prisma.message.updateMany({
@@ -264,8 +264,8 @@ export const registerSocketHandlers = (io) => {
         });
 
         // Invalidate caches for affected rooms/DMs
-        const roomIds = [...new Set(messagesToDelete.map((m) => m.roomId).filter(Boolean))];
-        const conversationIds = [...new Set(messagesToDelete.map((m) => m.conversationId).filter(Boolean))];
+        const roomIds = [...new Set(messagesToDelete.map((m: any) => m.roomId).filter(Boolean))];
+        const conversationIds = [...new Set(messagesToDelete.map((m: any) => m.conversationId).filter(Boolean))];
 
         for (const rId of roomIds) {
           await invalidateCache(CACHE_KEYS.roomMessages(rId));
@@ -277,7 +277,7 @@ export const registerSocketHandlers = (io) => {
           io.to(`dm:${cId}`).emit("message:deleted", { messageIds: verifiedIds, conversationId: cId });
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Delete message error:", error);
         socket.emit("error", { message: "Failed to delete messages" });
       }
@@ -285,7 +285,7 @@ export const registerSocketHandlers = (io) => {
 
     // DISCONNECT
 
-    socket.on("disconnect", (reason) => {
+    socket.on("disconnect", (reason: any) => {
       console.log(`🔴 User disconnected: ${socket.user.username} — ${reason}`);
     });
   });

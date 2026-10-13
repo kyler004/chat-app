@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 
-export const getRooms = async (req, res) => {
+export const getRooms = async (req: any, res: any) => {
   try {
     // Return only rooms the user is a member of
     const rooms = await prisma.room.findMany({
@@ -22,13 +22,13 @@ export const getRooms = async (req, res) => {
     });
 
     res.json({ rooms });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching rooms:', error);
     res.status(500).json({ error: 'Failed to fetch rooms' });
   }
 };
 
-export const createRoom = async (req, res) => {
+export const createRoom = async (req: any, res: any) => {
   const { name, description } = req.body;
   try {
     const room = await prisma.room.create({
@@ -51,13 +51,13 @@ export const createRoom = async (req, res) => {
       }
     });
     res.status(201).json({ room });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating room:', error);
     res.status(500).json({ error: 'Failed to create room' });
   }
 };
 
-export const addMember = async (req, res) => {
+export const addMember = async (req: any, res: any) => {
   const { roomId } = req.params;
   const { userId } = req.body;
 
@@ -78,7 +78,7 @@ export const addMember = async (req, res) => {
     });
 
     res.status(201).json({ message: 'User added to room', member: newMember });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding member:', error);
     if (error.code === 'P2002') {
       return res.status(400).json({ error: 'User is already a member of this room' });
@@ -87,7 +87,7 @@ export const addMember = async (req, res) => {
   }
 };
 
-export const removeMember = async (req, res) => {
+export const removeMember = async (req: any, res: any) => {
   const { roomId, userId } = req.params;
 
   try {
@@ -106,12 +106,12 @@ export const removeMember = async (req, res) => {
     });
 
     res.json({ message: 'User removed from room' });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: 'Failed to remove member' });
   }
 };
 
-export const updateRoom = async (req, res) => {
+export const updateRoom = async (req: any, res: any) => {
   const { id } = req.params;
   const { name, description } = req.body;
 
@@ -131,13 +131,13 @@ export const updateRoom = async (req, res) => {
     });
 
     res.json({ room: updatedRoom });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating room:', error);
     res.status(500).json({ error: 'Failed to update room details' });
   }
 };
 
-export const getMemberStatus = async (req, res) => {
+export const getMemberStatus = async (req: any, res: any) => {
   const { roomId } = req.params;
   try {
     const members = await prisma.roomMember.findMany({
@@ -145,7 +145,7 @@ export const getMemberStatus = async (req, res) => {
       include: { user: { select: { id: true, username: true, avatar: true } } }
     });
     res.json({ members });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: 'Failed to fetch members' });
   }
 };

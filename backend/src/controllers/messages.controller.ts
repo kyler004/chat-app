@@ -5,7 +5,7 @@ import {
   CACHE_KEYS,
 } from "../services/redis.service.js";
 
-export const getRoomMessages = async (req, res) => {
+export const getRoomMessages = async (req: any, res: any) => {
   try {
     const { roomId } = req.params;
     const cacheKey = CACHE_KEYS.roomMessages(roomId);
@@ -34,13 +34,13 @@ export const getRoomMessages = async (req, res) => {
     await setCachedMessages(cacheKey, messages);
 
     res.json({ messages, fromCache: false });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get messages error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-export const getDMMessages = async (req, res) => {
+export const getDMMessages = async (req: any, res: any) => {
   try {
     const { conversationId } = req.params;
     const cacheKey = CACHE_KEYS.dmMessages(conversationId);
@@ -69,7 +69,7 @@ export const getDMMessages = async (req, res) => {
     await setCachedMessages(cacheKey, messages);
 
     res.json({ messages, fromCache: false });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get DM messages error:", error);
     res.status(500).json({ error: "Internal server error" });
   }

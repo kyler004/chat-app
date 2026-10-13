@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma.js'; 
  
 
-export const protect = async (req, res, next) => {
+export const protect = async (req: any, res: any, next: any) => {
     try {
         // Extract the token from the authorization header
         const authHeader = req.headers.authorization; 
@@ -14,7 +14,8 @@ export const protect = async (req, res, next) => {
         const token = authHeader.split(' ')[1]; // "Bearer <token>"
 
         //verify the token 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET); 
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+//(token, process.env.JWT_SECRET);
 
         //Fetch fresh user data from DB
         const user = await prisma.user.findUnique({
@@ -35,7 +36,7 @@ export const protect = async (req, res, next) => {
         // Attach the user to req object for downstream view
         req.user = user; 
         next(); // Pass control to the actual route handler
-    } catch (error) {
+    } catch (error: any) {
         //Handling the error gracefully
         if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({ error: 'Invalid token'}); 

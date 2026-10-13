@@ -28,7 +28,7 @@ if (!cs || typeof cs !== "string") {
 let pool;
 try {
   pool = new pg.Pool({ connectionString: cs });
-} catch (err) {
+} catch (err: any) {
   console.error(
     "Failed to create pg.Pool with connection string (masked):",
     maskConnectionString(cs),

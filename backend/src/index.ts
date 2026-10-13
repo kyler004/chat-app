@@ -12,6 +12,7 @@ import roomRoutes from "./routes/room.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import inviteRoutes from "./routes/invite.routes.js";
 import dmRoutes from "./routes/dm.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
 import { socketAuthMiddleware } from "./sockets/socket.middleware.js";
 import { registerSocketHandlers } from "./sockets/socket.handlers.js";
 
@@ -30,17 +31,18 @@ app.use(cors({
   origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true
 }));
-app.use(morgan());
+app.use(morgan("dev"));
 app.use(express.json());
 
 // REST Routes
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/health", (req: any, res: any) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/invites", inviteRoutes);
 app.use("/api/dms", dmRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // WebSocket — auth runs before any event handler
 io.use(socketAuthMiddleware);

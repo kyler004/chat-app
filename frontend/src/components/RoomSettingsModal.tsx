@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, Search, UserPlus, UserMinus, Shield, ShieldCheck, Loader2, Sparkles } from 'lucide-react';
@@ -6,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import toast from 'react-hot-toast';
 
 export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, socket }) {
-  const { theme } = useTheme();
+  const { theme }: any = useTheme();
   const [members, setMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -139,12 +140,12 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+      <motion.div initial={{ opacity: 0 as any }} animate={{ opacity: 1 as any }} exit={{ opacity: 0 as any }} onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
 
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.9, opacity: 0 as any, y: 20 }}
+        animate={{ scale: 1, opacity: 1 as any, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0 as any, y: 20 }}
         className={`relative w-full max-w-2xl h-[600px] border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col ${theme.glassmorphism ? 'bg-bg-surface/80 backdrop-blur-3xl' : 'bg-bg-surface'}`}
       >
         <header className="flex items-center justify-between px-8 py-6 border-b border-white/5">
@@ -214,9 +215,9 @@ export default function RoomSettingsModal({ isOpen, onClose, room, currentUser, 
                <AnimatePresence>
                  {searchResults.length > 0 && (
                    <motion.div 
-                     initial={{ height: 0, opacity: 0 }} 
-                     animate={{ height: 'auto', opacity: 1 }}
-                     exit={{ height: 0, opacity: 0 }}
+                     initial={{ height: 0, opacity: 0 as any }}
+                     animate={{ height: 'auto', opacity: 1 as any }}
+                     exit={{ height: 0, opacity: 0 as any }}
                      className="bg-black/20 rounded-2xl border border-white/5 overflow-hidden"
                    >
                      {searchResults.map(user => (

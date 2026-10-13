@@ -46,9 +46,9 @@ export default function InvitesModal({ isOpen, onClose, invites, setInvites, use
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0 as any, scale: 0.95 }}
+        animate={{ opacity: 1 as any, scale: 1 }}
+        exit={{ opacity: 0 as any, scale: 0.95 }}
         className="w-full max-w-md overflow-hidden rounded-3xl bg-bg-surface border border-white/10 shadow-2xl glass-card flex flex-col max-h-[80vh]"
       >
         <div className="flex items-center justify-between p-6 border-b border-white/5">
@@ -81,9 +81,9 @@ export default function InvitesModal({ isOpen, onClose, invites, setInvites, use
                       {incoming.map(inv => (
                         <motion.div 
                           key={inv.id} 
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                          initial={{ opacity: 0 as any, height: 0 }}
+                          animate={{ opacity: 1 as any, height: 'auto' }}
+                          exit={{ opacity: 0 as any, height: 0, overflow: 'hidden' }}
                           className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5"
                         >
                           <div className="flex items-center gap-3">
